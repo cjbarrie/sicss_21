@@ -132,10 +132,10 @@ In summary the Academic Research product track allows the authorized user:
 
 ## Querying the Twitter API with `academictwitteR`
 
-We begin by loading the package with:
+We begin by storing our access token with:
 
 ```{r setup}
-library(academictwitteR)
+bearer_token = "AAAAAAAAAAAAAAAAAAAAA_INSERT_YOUR_TOKEN_HERE"
 ```
 
 The workhorse function of `academictwitteR` when it comes to collecting tweets containing a particular string or hashtag is `get_all_tweets()`.
@@ -248,9 +248,11 @@ blmtweets <- readRDS("data/blmtweets.rds")
 
 library(kableExtra)
 
+set.seed(123L)
+
 blmtweets %>%
   select(id, created_at, text, source) %>%
-  head(10) %>%
+  sample_n(10) %>%
   kbl() %>%
   kable_styling(c("striped", "hover", "condensed", "responsive"))
 ```

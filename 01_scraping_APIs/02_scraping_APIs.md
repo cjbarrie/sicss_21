@@ -253,3 +253,7 @@ Or we can simply read in the data already stored in serialized format as a .rds 
 ```r
 blmtweets <- readRDS("data/blmtweets.rds")
 ```
+
+And we'll end up with something like this:
+
+![](images/gifcap7.gif){width=100%}

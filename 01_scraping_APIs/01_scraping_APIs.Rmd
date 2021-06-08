@@ -25,12 +25,12 @@ The lecture material for today mentioned work by @Freelon2018a, @Bruns2019, @Pus
 
 These example tasks use different sources of online data, and here I introduce you to how we might gather data through both screen-scraping (or server-side) techniques as well as API (or client-side) techniques. 
 
-## Exercise: Screen-scraping 
+## Tutorial: Screen-scraping 
 
 In this tutorial, you will learn how to summarise, aggregate, and analyze text in R:
 
-* How to select elements of CSS using SelectorGadget
-* How to use the <tt>rvest</tt> package to scrape CSS elements
+* How to select elements of CSS using SelectorGadget (see [here](https://rvest.tidyverse.org/articles/articles/selectorgadget.html) for a detailed overview)
+* How to use the <tt>rvest</tt> package to scrape parts of a webpage
 
 ## Setup 
 
@@ -40,7 +40,12 @@ To practice these skills, we will use a series of webpages on the Internet Archi
 
 ##  Load data and packages 
 
-Beforce proceeding, we'll load the remaining packages we will need for this tutorial.
+Before proceeding, we'll load the remaining packages we will need for this tutorial.
+
+```{r, echo=F}
+library(emo)
+
+```
 
 ```{r, message=F}
 library(tidyverse) # loads dplyr, ggplot2, and others
@@ -61,7 +66,7 @@ You can also view the formatted output of this scraping exercise, alongside imag
 If you're working on this document from your own computer ("locally") you can download the Tahrir documents data in the following way:
 
 ```{r, eval = F}
-pamphdata <- read_csv("https://raw.githubusercontent.com/cjbarrie/RDL-Ed/main/03-screenscrape-apis/data/pamphlets_formatted_gsheets.csv")
+pamphdata <- read_csv("https://raw.githubusercontent.com/cjbarrie/sicss_21/main/01_scraping_APIs/data/pamphlets_formatted_gsheets.csv")
 ```
 
 
@@ -78,7 +83,7 @@ head(pamphdata)
 
 We are going to return to the Internet Archived webpages to see how we can produce this final formatted dataset. The archived Tahrir Documents webpages can be accessed [here](https://wayback.archive-it.org/2358/20120130143023/http://www.tahrirdocuments.org/).
 
-We first want to expect how the contents of each webage is stored.
+We first want to expect how the contents of each webpage is stored.
 
 When we scroll to the very bottom of the page, we see listed a number of hyperlinks to documents stored by month:
 
@@ -105,44 +110,51 @@ pagetext <- html %>%
 pagetext
 ```
 
+`r emo::ji("grimace")``r emo::ji("grimace")``r emo::ji("grimace")``r emo::ji("grimace")``r emo::ji("grimace")``r emo::ji("grimace")``r emo::ji("grimace")``r emo::ji("grimace")``r emo::ji("grimace")``r emo::ji("grimace")`
+
 Well this looks pretty terrifying now...
 
-We need a way of quickly identifying where the relevant text is so that we can specify this when we are scraping. The most widely-used tool to achieve this is the "Selector Gadget" Chrome Extension. You can add this to your browser for free [here](https://chrome.google.com/webstore/detail/selectorgadget/mhjhnkcfbdhnjickkkdbjoemdmbfginb?hl=en). The tool works by allowing the user to point and click on elements of a webpage. Unlike alternatives, such as "Inspect Element" browser tools, we are easily able to see how the webpage item is contained within CSS elements (rather than HTML alone), which is easier to parse and query. 
+We need a way of quickly identifying where the relevant text is so that we can specify this when we are scraping. The most widely-used tool to achieve this is the "Selector Gadget" Chrome Extension. You can add this to your browser for free [here](https://chrome.google.com/webstore/detail/selectorgadget/mhjhnkcfbdhnjickkkdbjoemdmbfginb?hl=en). 
+
+The tool works by allowing the user to point and click on elements of a webpage (or "CSS selectors"). Unlike alternatives, such as "Inspect Element" browser tools, we are easily able to see how the webpage item is contained within CSS selectors (rather than HTML tags alone), which is easier to parse. 
 
 We can do this with our Tahrir documents as below:
 
 ![](images/gifcap4.gif){width=100%}
 
-
 So now we know that the main text of the translated document is contained between "p" HTML tags. To identify the text between these HTML tags we can run:
 
 ```{r}
 pagetext <- html %>%
-  html_nodes("p") %>%
+  html_elements("p") %>%
   html_text(trim=TRUE)
 
 pagetext
   
 ```
 
-, which looks quite a lot more manageable...!
+`r emo::ji("relieved_face")``r emo::ji("relieved_face")``r emo::ji("relieved_face")``r emo::ji("relieved_face")``r emo::ji("relieved_face")``r emo::ji("relieved_face")``r emo::ji("relieved_face")``r emo::ji("relieved_face")``r emo::ji("relieved_face")``r emo::ji("relieved_face")`
+
+, which looks quite a lot more manageable...! 
+
+What is happening here? Essentially, the `html_elements()` function is scanning the page and collecting all HTML elements contained between `<p>` tags, which we collect using the "p" CSS selector. We are then just grabbing the text contained in this part of the page with the `html_text()` function. 
 
 So this gives us one way of capturing the text, but what about if we wanted to get other elements of the document, for example the date or the tags attributed to each document? Well we can do the same thing here too. Let's take the example of getting the date:
 
 ![](images/gifcap5.gif){width=100%}
 
-We see here that the date is tagged with ".calendar" and so we enter this into the same `html_nodes()` function as before:
+We see here that the date is identified by the ".calendar" CSS selector and so we enter this into the same `html_elements()` function as before:
 
 ```{r}
 pagedate <- html %>% 
-  html_nodes(".calendar") %>%
+  html_elements(".calendar") %>%
   html_text(trim=TRUE)
 
 pagedate
   
 ```
 
-Of course, this is all well and good, but we also need a way of doing this at scale---we can't just keep repeating the same process for every page we find as this wouldn't be much quicker than just copy pasting. So how can we go about doing this? Well we need first to understand the URL structure of the website in question.
+Of course, this is all well and good, but we also need a way of doing this at scale---we can't just keep repeating the same process for every page we find as this wouldn't be much quicker than just copy pasting. So how can we do this? Well we need first to understand the URL structure of the website in question.
 
 ## Inspecting URL structures
 
@@ -189,7 +201,7 @@ cat(jan2012url)
 
 We notice that for each month, the URL changes with the addition of month and year between back slashes at the end or the URL. In the next section, we will go through how to efficiently create a set of URLs to loop through and retrieve the information contained in each individual webpage.
 
-## Looping through URLs
+## Looping through dates
 
 We are going to want to retrieve the text of documents archived for each month. As such, our first task is to store each of these webpages as a series of strings. We could do this manually by, for example, pasting year and month strings to the end of each URL for each month from March, 2011 to January, 2012:
 
@@ -246,7 +258,13 @@ In the above, the `ifelse()` commands are simply telling R: if i (the number of 
 
 `"https://wayback.archive-it.org/2358/20120130143023/http://www.tahrirdocuments.org/2011/04/"`
 
-If, however, `i>=10 & i<=12` (i is greater than or equal to 10 and less than or equal to 12) then we are calling `paste0(url,"2011/",i,"/")` because here we do not need the first "0" in the months. Finally, if (else) i is greater than 12 then we are calling `paste0(url,"2012/01/")`. For this last call, notice, we do not have to specify whether i is greater than or equal to 12 because we are wrapping everything in `ifelse()` commands. With `ifelse()` calls like this, we are telling R if x "meets condition" then do y, ortherwise do z. When we are wrapping multiple `ifelse()` calls within each other, we are effectively telling R if x "meets condition" then do y, or if x "meets other condition" then do z, otherwise do a. So here, the "otherwise do a" part of the `ifelse()` calls is saying: if i is not less than 10, and is not between 10 and 12, then paste "2012/01/" to the end of the URL.
+If, however, `i>=10 & i<=12` (i is greater than or equal to 10 and less than or equal to 12) then we are calling `paste0(url,"2011/",i,"/")` because here we do not need the first "0" in the months. 
+
+Finally, if (else) i is greater than 12 then we are calling `paste0(url,"2012/01/")`. For this last call, notice, we do not have to specify whether i is greater than or equal to 12 because we are wrapping everything in `ifelse()` commands. With `ifelse()` calls like this, we are telling R if x "meets condition" then do y, otherwise do z. When we are wrapping multiple `ifelse()` calls within each other, we are effectively telling R if x "meets condition" then do y, or if x "meets other condition" then do z, otherwise do a. So here, the "otherwise do a" part of the `ifelse()` calls is saying: if i is not less than 10, and is not between 10 and 12, then paste "2012/01/" to the end of the URL.
+
+Got it? I didn't even get it on first reading... and I wrote it. The best way to understand what is going on is to run this code yourself and look at what each part is doing.
+
+## Looping through pages
 
 So now we have our list of URLs for each month. What next?
 
@@ -278,27 +296,28 @@ cat(marchurlp3)
 
 We can see pretty clearly that as we navigate through each page, there appears appended to the URL the string "page/2/" and "page/3/". So this shouldn't be too tricky to add to our list of URLs. But we want to avoid having to manually click through the archive for each month to figure out how many pagination tabs are at the bottom of each page. 
 
-Fortunately, we don't have to. Using the "Selector Gadget" tool again we can automate this process by grabbing the highest number that appears in the pagination bar for each month's pages. The loop below achieves this:
+Fortunately, we don't have to. Using the "Selector Gadget" tool again we can automate this process by grabbing the highest number that appears in the pagination bar for each month's pages. The code below achieves this:
 
 ```{r, eval=F}
-#CREATE SET OF STARTING URLS WITH PAGE NUMBER EXTENSIONS
-urlpages_all <- character(0)
-urlpages <- character(0)
-for (i in seq_along(urls)) {
-  url <- urls[i]
-  html <- read_html(url)
+
+urlpages_all <- character(0) #create empty character string to deposit our final set of urls
+urlpages <- character(0) #create empty character string to deposit our urls for each page of each month
+for (i in seq_along(urls)) { #for loop for each url stored above
+  url <- urls[i] #take the first url from the vector of urls created above
+  html <- read_html(url) #read the html
   pages <- html %>%
-    html_nodes(".page") %>%
-    html_text() 
-  pageints <- as.integer(pages)
-  npages <- max(pageints, na.rm = T)
-  for (j in 1:npages) {
-  newurl <- paste0(url,"page/",j,"/")
-  urlpages <- c(urlpages, newurl)
+    html_elements(".page") %>% #grab the page element
+    html_text() #convert to text
+  pageints <- as.integer(pages) #convert to set of integers
+  npages <- max(pageints, na.rm = T) #get number of highest integer
+  
+  for (j in 1:npages) { #for loop for each of 1:highest page integer for that month's url
+  newurl <- paste0(url,"page/",j,"/") #create new url by pasting "page/" and then the number of that page, and then "/", matching the url structure identified above
+  urlpages <- c(urlpages, newurl) #bind with previously created page urls for each month
   }
-  urlpages_all <- c(urlpages_all, urlpages) 
-  urlpages <- character(0)
-  urlpages_all <- gsub("page/1/", "", urlpages_all) #get rid of page/1/
+  urlpages_all <- c(urlpages_all, urlpages) #bind the monthly page by page urls together
+  urlpages <- character(0) #empty urlpages for next iteration of the first for loop
+  urlpages_all <- gsub("page/1/", "", urlpages_all) #get rid of page/1/ as not needed
 }
 ```
 
@@ -306,26 +325,33 @@ for (i in seq_along(urls)) {
 urlpages_all <- readRDS("data/urlpages_all.RDS")
 ```
 
-What's going on here? Well, in the first two lines, we are simply creating an empty character string that we're going to populate in the subsequent loop. Remember that we have a list of eleven starting URLs for each of months archived on this webpage. So in the code beginning `for (i in seq_along(files)` we saying, similar to above, for the beginning url to the end url, do the following in a loop: first, read in the url with `url <- urls[i]` then read the html it contains with   `html <- read_html(url)`.
+What's going on here? Well, in the first two lines, we are simply creating an empty character string that we're going to populate in the subsequent loop. Remember that we have a set of eleven starting URLs for each of months archived on this webpage. 
 
-After this line, we are getting the pages a character string of page numbers by calling the `html_nodes()` function on the ".page" tag. this gives a series of pages stored as e.g. "1" "2" "3". In order to be able to see how many there are, we need to extract the highest number that appears in this string. To do this, we first need to reformat it as an "integer" object rather than a "character" object so that R can recognize that these are number. So we call `  pageints <- as.integer(pages)`. Then we get the maximum by simply calling: `  npages <- max(pageints, na.rm = T)`. 
+So in the code beginning `for (i in seq_along(files)` we saying, similar to above, for the beginning url to the end url, do the following in a loop: first, read in the url with `url <- urls[i]` then read the html it contains with   `html <- read_html(url)`.
+
+After this line, we are getting the pages as a character vector of page numbers by calling the `html_elements()` function on the ".page" tag. this gives a series of pages stored as e.g. "1" "2" "3". 
+
+In order to be able to see how many there are, we need to extract the highest number that appears in this string. To do this, we first need to reformat it as an "integer" object rather than a "character" object so that R can recognize that these are numbers. So we call `pageints <- as.integer(pages)`. Then we get the maximum by simply calling: `npages <- max(pageints, na.rm = T)`. 
 
 In the next part of the loop, we are taking the new information we have stored as "npages," i.e., the number of pagination tabs for each month, and telling R: for each of these pages, define a new url by adding "page/" then the number of the pagination tab "j", and then "/". After we've bound all of these together, we get a list of URLs that look like this:
-
 
 ```{r}
 head(urlpages_all)
 ```
 
+## Looping through every page on the website
+
 So what next?
 
-The next step is to get the URLs for each of the documents contained in the archive for each month. How do we do this? Well, we can once again use the "Selector Gadget" tool to work this out. For the main landing pages of each month, we see listed, as below, each document in a list. For each of these documents, we see that the title, which links to the revolutionary leaflet in question, has two tags "h2" and ".post".
+The next step is to get the URLs for each of the documents contained in the archive for each month. How do we do this? Well, we can once again use the "Selector Gadget" tool to work this out. For the main landing pages of each month, we see listed, as below, each document in a list. For each of these documents, we see that the title, which links to the revolutionary leaflet in question, has two CSS selectors: "h2" and ".post".
 
 ![](images/gifcap6.gif){width=100%}
 
-We can again pass these tags through `html_nodes()` to grab what's contained inside. We can then grab what's contained inside these by extracting the "children" of these classes. In essence, this just means a lower level tag: tags can have tags within tags and these flow downwards like a family tree (hence the name, I suppose). So one of the "children" of this HTML tag is the link contained inside, which we can get with calling `html_children()` followed by specifying that we want the specific attribute of the web link it encloses with `html_attr("href")`. The subsequent lines then just remove extraneous information. 
+We can again pass these tags through `html_elements()` to grab what's contained inside. We can then grab what's contained inside these by extracting the "children" of these classes. In essence, this just means a lower level tag: tags can have tags within tags and these flow downwards like a family tree (hence the name, I suppose). 
 
-The complete loop, then, to retrieve the URL of the page for every pamplete contained on this website is:
+So one of the "children" of this HTML tag is the link contained inside, which we can get with calling `html_children()` followed by specifying that we want the specific attribute of the web link it encloses with `html_attr("href")`. The subsequent lines then just remove extraneous information. 
+
+The complete loop, then, to retrieve the URL of the page for every leaflet contained on this website is:
 
 
 ```{r, eval =F}
@@ -335,7 +361,7 @@ pamlinks_all <- character(0)
 for (i in seq_along(urlpages_all)) {
   url <- urlpages_all[i]
   html <- read_html(url)
-  links <- html_nodes(html, ".post , h2") %>%
+  links <- html_elements(html, ".post , h2") %>%
     html_children() %>%
     html_attr("href") %>%
     na.omit() %>%
@@ -363,64 +389,62 @@ See if you can work out yourselves how each part of this is fitting together. NO
 
 ```{r, eval=F}
 
-#GET TEXT FROM EACH PAMPHLET PAGE
 df_empty <- data.frame()
 for (i in seq_along(pamlinks_all)) {
   url <- pamlinks_all[i]
   html <- read_html(url)
+  cat("Collecting url number ",i,": ", url, "\n")
   
   error <- tryCatch(html <- read_html(url),
                     error=function(e) e)
   if (inherits(error, 'error')) {
-    df <- data.frame(matrix(ncol=0, nrow=length(1)))
-    df$title <- NA
-    df$date <- NA
-    df$text <- NA
-    df$imageurl <- NA
-    df$tags <- NA
-    df_empty <- rbind(df_empty, df)
+    df <- data.frame(title = NA,
+                     date = NA,
+                     text = NA,
+                     imageurl = NA,
+                     tags = NA)
     next
   }
   
   df <- data.frame(matrix(ncol=0, nrow=length(1)))
   #get titles
-  titles <- html_nodes(html, ".title") %>%
+  titles <- html_elements(html, ".title") %>%
     html_text(trim=TRUE)
   
   title <- titles[1]
   df$title <- title
   
   #get date
-  date <- html_nodes(html, ".calendar") %>%
+  date <- html_elements(html, ".calendar") %>%
     html_text(trim=TRUE)
   df$date <- date
   
   #get text
-  textsep <-  html_nodes(html, "p") %>%
+  textsep <-  html_elements(html, "p") %>%
     html_text(trim=TRUE)
   text <- paste(textsep, collapse = ",")
   df$text <- text
   
   #get tags
-  pamtags <- html_nodes(html, ".category") %>%
+  pamtags <- html_elements(html, ".category") %>%
     html_text(trim=TRUE)
   df$tags <- pamtags
   
   #get link to original pamphlet image
-  nodes_other <-  html_nodes(html, "a") %>%
+  elements_other <-  html_elements(html, "a") %>%
     html_children()
-  nodes_other[2]
-  imgurl <- str_extract(nodes_other[2], "src=\\S+")
-  nchars <- nchar(imgurl)
-  imgurl <- substr(imgurl, 6, (nchars-1))
+  url_element <- as.character(elements_other[2])
+  imgurl <- str_extract(url_element, "src=\\S+")
+  imgurl <- substr(imgurl, 6, (nchar(imgurl)-1))
   
   df$imageurl <- imgurl
   
   df_empty <- rbind(df_empty, df)
 }
 
+
 ```
 
-And now... we're pretty much there... Back where we started! 
+And now... we're pretty much there...back where we started! 
 
 ## References 

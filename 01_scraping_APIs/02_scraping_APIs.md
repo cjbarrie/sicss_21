@@ -217,7 +217,7 @@ get_all_tweets(
 )
 ```
 
-Will output JSON files like this:
+This will output JSON files like this:
 
 
 ```
@@ -235,14 +235,14 @@ Will output JSON files like this:
 ## [23] "users_1213425494068285442.json"
 ```
 
-Binding the JSON files:
+, which we can then bind as follows:
 
 
 ```r
 blmtweets <- bind_tweet_jsons("data/academictwitteR_data")
 ```
 
-OR:
+Or we can simply read in the data already stored in serialized format as a .rds file:
 
 
 ```r

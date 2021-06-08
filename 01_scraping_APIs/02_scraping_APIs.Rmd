@@ -220,11 +220,23 @@ get_all_tweets(
 
 ```
 
-This will output JSON files like this:
+We can then look at the output in our directory of JSON files like this:
+
+```{r, eval=F}
+
+list.files("data/academictwitteR_data")
+
+```
 
 ```{r, echo=F}
 
-list.files("data/academictwitteR_data")
+files <- c("data_1212161860600041475.json",  "data_1212202218138374144.json",  "data_1212454140183547909.json",  "data_1212541396005064704.json",  "data_1212602429998583808.json",
+"data_1212745962499780610.json",  "data_1212848819668340737.json",  "data_1212931998357966848.json",  "data_1213102352925970433.json",  "data_1213244966530502656.json", 
+"data_1213425494068285442.json",  "query",                          "users_1212161860600041475.json", "users_1212202218138374144.json", "users_1212454140183547909.json",
+"users_1212541396005064704.json", "users_1212602429998583808.json", "users_1212745962499780610.json", "users_1212848819668340737.json", "users_1212931998357966848.json",
+"users_1213102352925970433.json", "users_1213244966530502656.json", "users_1213425494068285442.json")
+
+print(files)
 
 ```
 
@@ -238,21 +250,8 @@ blmtweets <- bind_tweet_jsons("data/academictwitteR_data")
 
 Or we can simply read in the data already stored in serialized format as a .rds file:
 
-```{r}
+```{r, eval=F}
 
 blmtweets <- readRDS("data/blmtweets.rds")
   
-```
-
-```{r, echo = F, message = F}
-
-library(kableExtra)
-
-set.seed(123L)
-
-blmtweets %>%
-  select(id, created_at, text, source) %>%
-  sample_n(10) %>%
-  kbl() %>%
-  kable_styling(c("striped", "hover", "condensed", "responsive"))
 ```

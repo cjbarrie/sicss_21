@@ -217,7 +217,12 @@ get_all_tweets(
 )
 ```
 
-This will output JSON files like this:
+We can then look at the output in our directory of JSON files like this:
+
+
+```r
+list.files("data/academictwitteR_data")
+```
 
 
 ```
@@ -248,86 +253,3 @@ Or we can simply read in the data already stored in serialized format as a .rds 
 ```r
 blmtweets <- readRDS("data/blmtweets.rds")
 ```
-
-<table class="table table-striped table-hover table-condensed table-responsive" style="margin-left: auto; margin-right: auto;">
- <thead>
-  <tr>
-   <th style="text-align:left;"> id </th>
-   <th style="text-align:left;"> created_at </th>
-   <th style="text-align:left;"> text </th>
-   <th style="text-align:left;"> source </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> 1212655100973461505 </td>
-   <td style="text-align:left;"> 2020-01-02T08:41:20.000Z </td>
-   <td style="text-align:left;"> RT @willallenactor: "All lives have mattered since creation. But black lives have mattered less since the birth of this nation."
- A clip fr… </td>
-   <td style="text-align:left;"> Twitter for Android </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 1212633229770948608 </td>
-   <td style="text-align:left;"> 2020-01-02T07:14:26.000Z </td>
-   <td style="text-align:left;"> @absurdistwords I would be dead if I had been born Black. 
-
-That's the simple truth of it, looking back.
-
-The fact that wytness probably saved my life is no reason why so many black lives full of unique talent should be sacrificed on the altar of #WhiteSupremacy 
-#BlackLivesMatter
-@UniteThePoor </td>
-   <td style="text-align:left;"> Twitter for Android </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 1212748345573117954 </td>
-   <td style="text-align:left;"> 2020-01-02T14:51:52.000Z </td>
-   <td style="text-align:left;"> .@JulianCastro is crucial in #Election2020. He proposed some of the boldest, progressive plans for immigration reform, police accountability &amp;amp; environmental justice. Whenever he had the chance to #SayHerName &amp;amp; affirm #BlackLivesMatter, he did. He made this race stronger, period. </td>
-   <td style="text-align:left;"> Twitter for iPhone </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 1213289492628434944 </td>
-   <td style="text-align:left;"> 2020-01-04T02:42:11.000Z </td>
-   <td style="text-align:left;"> RT @kateju9: #justicereform  for @WgarNews 
-
-#BlackLivesMatter 
-Our aboriginal communities are suffering. Lack of water 💧 their food recour… </td>
-   <td style="text-align:left;"> Twitter for iPhone </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 1213523690043760641 </td>
-   <td style="text-align:left;"> 2020-01-04T18:12:48.000Z </td>
-   <td style="text-align:left;"> EVERY #SmallBusiness #SmallBiz knows effects of losing #NetNeutrality  my team +I hope u consider helping #share this special project  #ForYourConsideration #Oscars2020 #Oscars  #eVeNgodThisFemaleIsNotYetRated™ #FYC #LGBTQ #BLM #ClimateEmergency #GLAAD  https://t.co/XGan48Tebs https://t.co/fvTBfWGWxw </td>
-   <td style="text-align:left;"> Twitter for Android </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 1212543103699050496 </td>
-   <td style="text-align:left;"> 2020-01-02T01:16:18.000Z </td>
-   <td style="text-align:left;"> RT @WildPalmsLtd: An NYPD officer got drunk, threatened the occupant, and used racial slurs. He was convicted of multiple counts but is som… </td>
-   <td style="text-align:left;"> Twitter Web App </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 1212858078128852992 </td>
-   <td style="text-align:left;"> 2020-01-02T22:07:54.000Z </td>
-   <td style="text-align:left;"> (2/2) Didn't think my heavy heart could feel better, but appreciate seeing what it means to fight - thx again @michaelharriot #BlackGirlsRock #BlackGirlMagic #BlackLivesMatter #BlackTwitter #BlackLoveMatters 🖤 #ENDWHITESUPREMACY #WPRTRP </td>
-   <td style="text-align:left;"> Twitter Web App </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 1213069645005148161 </td>
-   <td style="text-align:left;"> 2020-01-03T12:08:35.000Z </td>
-   <td style="text-align:left;"> RT @WildPalmsLtd: Some welcome news for a change. The racist NYPD cop who went coo-coo after a bachelor party calling the victims "f---ing… </td>
-   <td style="text-align:left;"> Twitter for Android </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 1212465486186926080 </td>
-   <td style="text-align:left;"> 2020-01-01T20:07:53.000Z </td>
-   <td style="text-align:left;"> The way I recall growing up before the wicked #socialist blacks with their hate and blame took over. #dem #blm @naacp and the likes now - #walkAway #redpill #BlackVoicesforTrump #maga - Excellent movie, enjoy. https://t.co/1FXtbutNg2 </td>
-   <td style="text-align:left;"> Twitter Web App </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 1213010362779537408 </td>
-   <td style="text-align:left;"> 2020-01-03T08:13:01.000Z </td>
-   <td style="text-align:left;"> RT @Anderhardt: #FridayThoughts #FridayMotivation #FridayVibes #fridaymorning #FridayFeeling #AHomeForEveryHorse #SaveOurHorses #horse #wil… </td>
-   <td style="text-align:left;"> Twitter for iPhone </td>
-  </tr>
-</tbody>
-</table>

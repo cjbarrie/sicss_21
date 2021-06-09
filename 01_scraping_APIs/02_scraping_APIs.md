@@ -4,7 +4,7 @@ subtitle: "Working with Digital Data: APIs"
 author:
   name: Christopher Barrie
   affiliation: University of Edinburgh | [SICSS](https://github.com/cjbarrie/sicss_21)
-# date: Lecture 6  #"08 June 2021"
+# date: Lecture 6  #"09 June 2021"
 output: 
   html_document:
     theme: flatly
@@ -204,7 +204,6 @@ users <- bind_user_jsons(data_path = "data/")
 Let's say, as an example, we queried the Twitter API with the following code:
 
 
-
 ```r
 get_all_tweets(
   "#BLM OR #BlackLivesMatter",
@@ -257,3 +256,265 @@ blmtweets <- readRDS("data/blmtweets.rds")
 And we'll end up with something like this:
 
 ![](images/gifcap7.gif){width=100%}
+
+## Building a query 
+
+The v2 Twitter API allows for greater precision when making queries. A query might just be a single string like "happy new year" if you're interested on how people are celebrating on the night of December 31. Alternatively, the query might involve several additional operators that filter tweets with greater precision to return specific tweet content. 
+
+The following section guides you through the logics underpinning queries to the Twitter API. For full information on these logics you may additionally wish to consult the Twitter API documentation on how to build a query [here](https://developer.twitter.com/en/docs/twitter-api/tweets/search/integrate/build-a-query).
+
+As above, for a particular set of hashtags a call may look like:
+
+
+```r
+bearer_token <- "" # Insert bearer token
+
+tweets <-
+  get_all_tweets(
+    "#BLM OR #BlackLivesMatter",
+    "2020-01-01T00:00:00Z",
+    "2020-01-05T00:00:00Z",
+    bearer_token
+  )
+```
+
+Alternatively, we can specify a character string comprising several elements. For example, we if we wanted to search multiple hashtags, we could specify a query as follows:
+
+
+```r
+bearer_token <- "" # Insert bearer token
+
+htagquery <- c("#BLM", "#BlackLivesMatter", "#GeorgeFloyd")
+
+tweets <-
+  get_all_tweets(
+    htagquery,
+    "2020-01-01T00:00:00Z",
+    "2020-01-05T00:00:00Z",
+    bearer_token
+  )
+```
+
+, which will achieve the same thing as typing out `OR` between our strings.  
+
+Note that the "AND" operator is implicit when specifying more than one character string in the query. See [here](https://developer.twitter.com/en/docs/twitter-api/tweets/search/integrate/build-a-query) for information on building queries for search tweets. Thus, when searching for all elements of a character string, a call may look like:
+
+
+```r
+bearer_token <- "" # Insert bearer token
+
+tweets <-
+  get_all_tweets("apples oranges",
+                 "2020-01-01T00:00:00Z",
+                 "2020-01-05T00:00:00Z",
+                 bearer_token)
+```
+
+, which will capture tweets containing *both* the words "apples" and "oranges." The same logic applies for hashtag queries.
+
+## Building a query manually
+
+With `academictwitteR` you have two main options when building a query. The first is to do it "manually" by following the documentation provided by Twitter (linked above) and pasting in the relevant operators to your query.
+
+Here's how you might achieve this, using the `get_all_tweets()` function:
+
+
+```r
+tweets <-
+  get_all_tweets(
+    "#BLM OR #BlackLivesMatter",
+    "2020-01-01T00:00:00Z",
+    "2020-01-05T00:00:00Z",
+    bearer_token,
+    data_path = "data/"
+    bind_tweets = FALSE
+  )
+```
+
+We begin with the same query as used in examples above, which searches for tweets containing one or both of the specified hashtags relating to the Black Lives Matter movement. We may, however, want to be more precise with our query. Let's say we were only interested in tweets written in English and originating from the US. We would add several operators to our query to filter by these characteristics:
+
+
+```r
+tweets <-
+  get_all_tweets(
+    "#BLM OR #BlackLivesMatter place_country:US lang:en",
+    "2020-01-01T00:00:00Z",
+    "2020-01-05T00:00:00Z",
+    bearer_token,
+    data_path = "data/",
+    bind_tweets = FALSE
+  )
+```
+
+Let's further say that we weren't interested in retweets, and that we were only interested in tweets that contained an image. We would then narrow down our query further:
+
+
+```r
+tweets <-
+  get_all_tweets(
+    "#BLM OR #BlackLivesMatter place_country:US lang:en -is:retweet has:images",
+    "2020-01-01T00:00:00Z",
+    "2020-01-05T00:00:00Z",
+    bearer_token,
+    data_path = "data/",
+    bind_tweets = FALSE
+  )
+```
+
+We might then decide that our geo filter is not accurate enough. We don't just want tweets originating from the US but we want tweets from Seattle in particular. This would mean adding more operators to our query:
+
+
+```r
+tweets <-
+  get_all_tweets(
+    "#BLM OR #BlackLivesMatter place_country:US place:seattle lang:en -is:retweet has:images",
+    "2020-01-01T00:00:00Z",
+    "2020-01-05T00:00:00Z",
+    bearer_token,
+    data_path = "data/",
+    bind_tweets = FALSE
+  )
+```
+
+What if we were unsatisfied with the accuracy of our geo parameters and we wanted to be sure that our tweets were actually coming from a particular place? Let's say we are interested in central Seattle, as shown in the map below.
+
+![](images/seattle.png){width=70%}
+
+Twitter also allows us to query tweets originating from within a particular geographical buffer too. Here, we simply specify the longitude and latitude of the southwest and then the northeast corners of this bounding box. Note, this image is taken from a screenshot of the website [http://bboxfinder.com](http://bboxfinder.com). Many such websites exist that allow you to find the bounding box coordinates of a place of interest, including [https://www.openstreetmap.org](https://www.openstreetmap.org) and [https://boundingbox.klokantech.com/](https://boundingbox.klokantech.com/).
+
+We can then input this information with the "bounding_box" operator as below:
+
+
+```r
+tweets <-
+  get_all_tweets(
+    "#BLM OR #BlackLivesMatter bounding_box:[-122.375679 47.563554 -122.266159 47.643417] lang:en -is:retweet has:images",
+    "2020-01-01T00:00:00Z",
+    "2020-01-05T00:00:00Z",
+    bearer_token,
+    data_path = "data/",
+    bind_tweets = FALSE
+  )
+```
+
+## Building a query with `build_query()`
+
+Alternatively, you can use the convenience function `build_query()` included in the `academictwitteR` package. 
+
+The function comes with multiple optional parameters, which can be combined to generate a more precise query. This can then be passed to an object, here called "query," which can then be entered into the `get_all_tweets()` function as our query. Alternatively, the `build_query` arguments (with the exception of the `geo_query` argument) can be added as additional arguments into the `get_all_tweets` function. 
+
+The below provides an example, and prints the out output of the function. Here, we are building a query for the #BLM hashtag, specifying that we do not want to capture retweets, that we want tweets to originate from London, that we don't want to capture any promoted tweets, that we want the tweets to contain  URLs, that we want it to contain videos, and that they are written in English. 
+
+
+```r
+query <- build_query(query = "#BLM", is_retweet = FALSE, place = "London", remove_promoted = TRUE, has_links = TRUE, has_videos = TRUE, lang = "en")
+
+query
+```
+
+```
+## [1] "#BLM -is:retweet place:London -is:nullcast has:links has:videos lang:en"
+```
+
+We can also enter geographical information with the `build_query()` function. Our two options here are the `point_radius` and `bbox` arguments. Both of these take numeric vectors as inputs. The `point_radius` argument requires three pieces of information: the longitude and latitude of a target coordinate, and the buffer size around that coordinate. The `bbox` argument, which stands for "bounding box," requires four pieces of information: the longitude and latitude of the southwest corner of the bounding box and the longitude and latitude of the northeast corner of the bounding box.
+
+To build a query including a filter by point radius, we might use:
+
+
+```r
+query <-
+  build_query(
+    query = "#BLM",
+    point_radius = c(-0.131969125179604, 51.50847878040284, 25)
+  )
+
+query
+```
+
+```
+## [1] "#BLM point_radius:[-0.131969125179604 51.5084787804028 25mi]"
+```
+
+Note that the maximum radius for the buffer is 25 miles. Similarly, the maximum height and width of any bounding box is 25 miles. Inputting coordinate information that exceeds these bounds will result in a 400 status code error.
+
+To make things a bit simpler, the `build_query()` function also includes prompts for entering parameters that require more precise geographical information, like the "bounding_box" or "point_radius" parameters for which we can submit queries to the Twitter API. These can be called by setting the `geo_query` argument to `TRUE` as so:
+
+
+
+```r
+query <- build_query(query = "#BLM", geo_query = TRUE)
+```
+
+```
+Which geo buffer type type do you want? 
+
+1: Point radius
+2: Bounding box
+```
+
+If we select option 1, we will then be prompted to enter the longitude, latitude, and radius of the buffer emanating outwards from this coordinate as below, where I enter the same information as we did above:
+
+```
+Selection: 1
+What is longitude? -0.131969125179604
+What is latitude? 51.50847878040284
+What is radius? 25
+
+```
+
+
+
+And we see that the end result is the same as the above:
+
+
+```r
+query
+```
+
+```
+## [1] "#BLM -is:retweet point_radius:[-0.131969125179604 51.50847878040284 25mi]"
+```
+
+Note that `build_query()` can also take a character vector of strings as query. This will produce the equivalent of typing "OR" between our target strings. Let's say we were interested in multiple hashtags and not just one. We could still build a query to filter our tweets by the parameters discussed above as follows:
+
+
+```r
+htagquery <- c("#BLM", "#BlackLivesMatter", "#GeorgeFloyd")
+
+query <-
+  build_query(
+    query = htagquery,
+    is_retweet = FALSE,
+    place = "London",
+    remove_promoted = TRUE,
+    has_links = TRUE,
+    has_videos = TRUE,
+    lang = "en"
+  )
+
+query
+```
+
+```
+## [1] "(#BLM OR #BlackLivesMatter OR #GeorgeFloyd) -is:retweet place:London -is:nullcast has:links has:videos lang:en"
+```
+
+And if you wanted to just call `build_query()` within the `get_all_tweets()` function (rather than building it separately) you could do this too:
+
+
+```r
+tweets <-
+  get_all_tweets(
+    "#BLM OR #BlackLivesMatter",
+    "2020-01-01T00:00:00Z",
+    "2020-01-05T00:00:00Z",
+    bearer_token,
+    data_path = "data/",
+    bind_tweets = FALSE,
+    lang = "en",
+    is_retweet = F,
+    has_images = T
+  )
+```
+
+, which would search for tweets containing the Black Lives Matter hashtags, in English, removing RTs, and containing images. Voilá!

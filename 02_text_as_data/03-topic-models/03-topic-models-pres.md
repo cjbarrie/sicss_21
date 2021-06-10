@@ -208,11 +208,7 @@ Extensions
 - "Structural topic models": from [Roberts et al.](https://scholar.princeton.edu/files/bstewart/files/stmnips2013.pdf) and dedicated webpage [here](https://www.structuraltopicmodel.com/)
 - Stochastic block model approches: see [Gerlach et al.](https://advances.sciencemag.org/content/4/7/eaaq1360/) and Github repo [here](https://github.com/martingerlach/hSBM_Topicmodel)
 
-Worksheet
+Worksheets
 ========================================================
 
-- [https://github.com/cjbarrie/CTA-Ed](https://github.com/cjbarrie/CTA-Ed)
-
-<center>
-![](images/githubshot.png)
-</center>
+- [https://github.com/cjbarrie/sicss_21](https://github.com/cjbarrie/sicss_21)

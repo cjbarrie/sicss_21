@@ -1,0 +1,167 @@
+---
+title: "Text as Data: Word embedding"
+subtitle: "SICSS-Oxford, 2021"
+author:
+  name: Christopher Barrie
+  affiliation: University of Edinburgh | [SICSS](https://github.com/cjbarrie/sicss_21)
+output: 
+  html_document:
+    theme: flatly
+    highlight: haddock
+    # code_folding: show
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    keep_md: true
+    
+bibliography: CTA.bib    
+---
+
+
+# Exercise 4: Word embedding
+
+## Introduction
+
+In this tutorial, you will learn how to:
+
+* Load pre-trained word embeddings
+* Train a local word embedding model
+* Visualize and inspect results
+* Determine over-time trends
+
+Borrows from tutorial by Chris Bail [here](https://cbail.github.io/textasdata/word2vec/rmarkdown/word2vec.html) and Julia Silge [here](https://juliasilge.com/blog/tidy-word-vectors/).
+
+## Setup 
+
+```{r, message=F}
+library(tidyverse) # loads dplyr, ggplot2, and others
+library(stringr) # to handle text elements
+library(tidytext) # includes set of functions useful for manipulating text
+library(ggthemes) # to make your plots look nice
+library(text2vec) # for word embedding implementation
+library(widyr) #for reshaping the text data
+library(irlba) #for svd
+```
+
+```{r}
+twts_sample <- readRDS("data/twts_corpus_sample.rds")
+
+#create tweet id
+twts_sample$postID <- row.names(twts_sample)
+
+```
+
+```{r, eval = F}
+
+#create context window with length 6
+tidy_skipgrams <- twts_sample %>%
+    unnest_tokens(ngram, tweet, token = "ngrams", n = 6) %>%
+    mutate(ngramID = row_number()) %>% 
+    tidyr::unite(skipgramID, postID, ngramID) %>%
+    unnest_tokens(word, ngram)
+
+```
+
+```{r, echo=F}
+load("data/tidy_skipgrams.RData")
+```
+
+```{r, warning=FALSE}
+
+#calculate unigram probabilities (used to normalize skipgram probabilities later)
+unigram_probs <- twts_sample %>%
+    unnest_tokens(word, tweet) %>%
+    count(word, sort = TRUE) %>%
+    mutate(p = n / sum(n))
+
+#calculate probabilities
+skipgram_probs <- tidy_skipgrams %>%
+    pairwise_count(word, skipgramID, diag = TRUE, sort = TRUE) %>%
+    mutate(p = n / sum(n))
+
+#normalize probabilities
+normalized_prob <- skipgram_probs %>%
+    filter(n > 20) %>%
+    rename(word1 = item1, word2 = item2) %>%
+    left_join(unigram_probs %>%
+                  select(word1 = word, p1 = p),
+              by = "word1") %>%
+    left_join(unigram_probs %>%
+                  select(word2 = word, p2 = p),
+              by = "word2") %>%
+    mutate(p_together = p / p1 / p2)
+
+normalized_prob %>% 
+    filter(word1 == "brexit") %>%
+    arrange(-p_together)
+
+```
+
+
+```{r, eval=F}
+
+pmi_matrix <- normalized_prob %>%
+    mutate(pmi = log10(p_together)) %>%
+    cast_sparse(word1, word2, pmi)
+
+#remove missing data
+pmi_matrix@x[is.na(pmi_matrix@x)] <- 0
+#run SVD
+pmi_svd <- irlba(pmi_matrix, 256, maxit = 500)
+
+```
+
+```{r ,echo=F}
+load("data/pmi_svd.RData")
+
+pmi_matrix <- normalized_prob %>%
+    mutate(pmi = log10(p_together)) %>%
+    cast_sparse(word1, word2, pmi)
+
+pmi_matrix@x[is.na(pmi_matrix@x)] <- 0
+
+```
+
+```{r}
+#next we output the word vectors:
+word_vectors <- pmi_svd$u
+rownames(word_vectors) <- rownames(pmi_matrix)
+
+dim(word_vectors)
+
+```
+
+```{r}
+
+search_synonyms <- function(word_vectors, word){
+  word_vectors = word_vectors
+  selected_vector = word_vectors[word,]
+  mult <- as.data.frame(word_vectors %*% selected_vector)
+  
+  mult %>%
+  rownames_to_column() %>%
+  rename(word = rowname,
+         similarity = V1) %>%
+    anti_join(get_stopwords(language = "en")) %>%
+    filter()
+  arrange(-similarity)
+
+}
+
+boris_synonyms <- search_synonyms(word_vectors, word_vectors["boris",])
+
+brexit_synonyms <- search_synonyms(word_vectors, word_vectors["brexit",])
+
+head(boris_synonyms)
+
+head(brexit_synonyms)
+
+```
+
+
+## Exercises
+
+1. 
+2. 
+
+## References 

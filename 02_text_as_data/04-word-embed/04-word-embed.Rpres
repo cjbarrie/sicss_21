@@ -1,0 +1,190 @@
+Word embedding
+========================================================
+author: Christopher Barrie 
+date: Thursday, June 17: SICSS-Oxford
+width: 2500
+height: 900
+transition: none  
+  website: https://cjbarrie.xyz     
+  github: https://github.com/cjbarrie       
+  Twitter: https://www.twitter.com/cbarrie
+
+Word embedding
+========================================================
+
+- "you shall know a word by the company it keeps" (Firth, 1957)
+    - Generates matrix of word vectors
+      - where words closer together in vector space are more "similar" or "related"
+      
+    
+Word embedding
+========================================================
+
+- Why use it?
+    - Understanding language use (e.g., across time/across groups)
+    - As input for downstream NLP implementations
+        
+========================================================
+
+<center>
+<img src="images/diachronic.png" width=600 height=900>
+</center>
+- Source: Hamilton et al. 2016. "Diachronic Word Embeddings Reveal Statistical Laws of Semantic Change." *Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics*.
+
+========================================================
+
+<center>
+<img src="images/party_placement.png" width=600 height=900>
+</center>
+- Source: Rheault and Cochrane. 2020. "Word Embeddings for the Analysis of Ideological Placement in Parliamentary Corpora." *Political Analysis*.
+
+========================================================
+
+<center>
+<img src="images/ethnic_stereotypes.png" width=600 height=900>
+</center>
+- Source: Garg et al. 2018. "Word embeddings quantify 100 years of gender and ethnic stereotypes." *Proceedings of the National Academy of Sciences*.
+
+========================================================
+
+<center>
+<img src="images/gender_stereotypes.png" width=600 height=900>
+</center>
+- Source: Jones et al. 2019. " Stereotypical Gender Associations in Language Have Decreased Over Time." *Sociological Science*.
+
+========================================================
+
+<center>
+<img src="images/casm.png" width=600 height=900>
+</center>
+
+How does it work?
+========================================================
+
+- Various approaches, including:
+  - 1. SVD
+  - 2. Neural network-based techniques like GloVe and Word2Vec
+  
+    
+Implementation
+========================================================
+
+```{r, echo= F}
+
+library(tidyverse) # loads dplyr, ggplot2, and others
+library(tidytext) # includes set of functions useful for manipulating text
+library(topicmodels) # to estimate topic models
+library(tm)
+
+tocq <- readRDS("data/tocq.RDS")
+
+tocq_words <- tocq %>%
+  mutate(booknumber = ifelse(gutenberg_id==815, "DiA1", "DiA2")) %>%
+  unnest_tokens(word, text) %>%
+  count(booknumber, word, sort = TRUE) %>%
+  ungroup() %>%
+  anti_join(stop_words)
+
+tocq_dtm <- tocq_words %>%
+  cast_dtm(booknumber, word, n)
+```
+
+- Data structure:
+    - `DocumentTermMatrix`
+    
+```{r, echo=F}
+tm::inspect(tocq_dtm)
+```
+
+
+Getting the data
+========================================================
+
+```{r, echo=F}
+library('knitr')
+```
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 500)
+```
+```{r, message=F}
+library(tidyverse) # loads dplyr, ggplot2, and others
+library(stringr) # to handle text elements
+library(tidytext) # includes set of functions useful for manipulating text
+library(topicmodels) # to estimate topic models
+library(gutenbergr) # to get text data
+library(scales)
+library(tm)
+library(ggthemes) # to make your plots look nice
+```
+
+```{r, eval=F}
+tocq <- gutenberg_download(c(815, 816), 
+                            meta_fields = "author")
+```
+
+```{r, echo=F}
+tocq <- readRDS("data/tocq.RDS")
+```
+
+Converting to DocumentTermMatrix
+========================================================
+
+```{r}
+tocq_words <- tocq %>%
+  mutate(booknumber = ifelse(gutenberg_id==815, "DiA1", "DiA2")) %>%
+  unnest_tokens(word, text) %>%
+  count(booknumber, word, sort = TRUE) %>%
+  ungroup() %>%
+  anti_join(stop_words)
+
+tocq_dtm <- tocq_words %>%
+  cast_dtm(booknumber, word, n)
+
+tm::inspect(tocq_dtm)
+```
+
+Estimating a topic model
+========================================================
+
+```{r}
+
+tocq_lda <- LDA(tocq_dtm, k = 10, control = list(seed = 1234))
+
+```
+
+Evaluating a topic model
+========================================================
+
+- β: per-topic-per-word probabilities
+    - i.e., the probability that the given term belongs to a given topic
+
+```{r}
+
+tocq_topics <- tidy(tocq_lda, matrix = "beta")
+head(tocq_topics, n = 10)
+
+```
+
+Evaluating a topic model
+========================================================
+
+- γ: per-document-per-topic probabilities
+    - i.e., the probability that a given document (here: Volume) belongs to a particular topic
+    
+```{r}
+
+tocq_gamma <- tidy(tocq_lda, matrix = "gamma")
+head(tocq_gamma, n = 10)
+
+```
+
+Extensions
+========================================================
+
+- "Structural topic models": from [Roberts et al.](https://scholar.princeton.edu/files/bstewart/files/stmnips2013.pdf) and dedicated webpage [here](https://www.structuraltopicmodel.com/)
+- Stochastic block model approches: see [Gerlach et al.](https://advances.sciencemag.org/content/4/7/eaaq1360/) and Github repo [here](https://github.com/martingerlach/hSBM_Topicmodel)
+
+Worksheets
+========================================================
+
+- [https://github.com/cjbarrie/sicss_21](https://github.com/cjbarrie/sicss_21)

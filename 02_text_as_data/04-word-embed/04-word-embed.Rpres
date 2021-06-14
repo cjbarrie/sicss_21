@@ -65,124 +65,72 @@ How does it work?
   - 1. SVD
   - 2. Neural network-based techniques like GloVe and Word2Vec
   
-    
-Implementation
+What do both approaches do?
 ========================================================
+
+1. Define a context window
+2. Looks at probabilities of word appearing near another word
+
+========================================================
+
+- Define a context window:
+
+![Context window](images/window.png)
+  
+========================================================
+
+- Looks at probabilities of word appearing near another word
 
 ```{r, echo= F}
+library(Matrix)
+library(tidyverse)
 
-library(tidyverse) # loads dplyr, ggplot2, and others
-library(tidytext) # includes set of functions useful for manipulating text
-library(topicmodels) # to estimate topic models
-library(tm)
+load("data/pmi_svd.RData")
+load("data/pmi_matrix.RData")
 
-tocq <- readRDS("data/tocq.RDS")
-
-tocq_words <- tocq %>%
-  mutate(booknumber = ifelse(gutenberg_id==815, "DiA1", "DiA2")) %>%
-  unnest_tokens(word, text) %>%
-  count(booknumber, word, sort = TRUE) %>%
-  ungroup() %>%
-  anti_join(stop_words)
-
-tocq_dtm <- tocq_words %>%
-  cast_dtm(booknumber, word, n)
+head(pmi_matrix[1:6, 1:6])
 ```
+  
+    
+Implementation: SVD approach
+========================================================
 
 - Data structure:
-    - `DocumentTermMatrix`
+  - Word pair matrix with PMI (Pairwise mutual information)
+  - where   PMI = log(P(x,y)/P(x)P(y))
+  - and   P(x,y)   is the probability of word x appearing within a six-word window of word y
+  - and   P(x)   is the probability of word x appearing in the whole corpus
+  - and   P(y)   is the probability of word y appearing in the whole corpus
     
-```{r, echo=F}
-tm::inspect(tocq_dtm)
-```
-
-
-Getting the data
-========================================================
-
-```{r, echo=F}
-library('knitr')
-```
-```{r set-options, echo=FALSE, cache=FALSE}
-options(width = 500)
-```
-```{r, message=F}
-library(tidyverse) # loads dplyr, ggplot2, and others
-library(stringr) # to handle text elements
-library(tidytext) # includes set of functions useful for manipulating text
-library(topicmodels) # to estimate topic models
-library(gutenbergr) # to get text data
-library(scales)
-library(tm)
-library(ggthemes) # to make your plots look nice
-```
-
-```{r, eval=F}
-tocq <- gutenberg_download(c(815, 816), 
-                            meta_fields = "author")
-```
-
-```{r, echo=F}
-tocq <- readRDS("data/tocq.RDS")
-```
-
-Converting to DocumentTermMatrix
-========================================================
-
-```{r}
-tocq_words <- tocq %>%
-  mutate(booknumber = ifelse(gutenberg_id==815, "DiA1", "DiA2")) %>%
-  unnest_tokens(word, text) %>%
-  count(booknumber, word, sort = TRUE) %>%
-  ungroup() %>%
-  anti_join(stop_words)
-
-tocq_dtm <- tocq_words %>%
-  cast_dtm(booknumber, word, n)
-
-tm::inspect(tocq_dtm)
-```
-
-Estimating a topic model
-========================================================
-
-```{r}
-
-tocq_lda <- LDA(tocq_dtm, k = 10, control = list(seed = 1234))
-
-```
-
-Evaluating a topic model
-========================================================
-
-- β: per-topic-per-word probabilities
-    - i.e., the probability that the given term belongs to a given topic
-
-```{r}
-
-tocq_topics <- tidy(tocq_lda, matrix = "beta")
-head(tocq_topics, n = 10)
-
-```
-
-Evaluating a topic model
-========================================================
-
-- γ: per-document-per-topic probabilities
-    - i.e., the probability that a given document (here: Volume) belongs to a particular topic
+The resulting matrix structure will look something like this:
     
-```{r}
+```{r ,echo=F}
 
-tocq_gamma <- tidy(tocq_lda, matrix = "gamma")
-head(tocq_gamma, n = 10)
+head(pmi_matrix[1:6, 1:6])
 
 ```
+
+Implementation: SVD approach
+========================================================
+
+And the resulting matrix object will take the following format:
+
+```{r ,echo=F}
+
+glimpse(pmi_matrix)
+
+```
+
+Implementation: neural-net GloVe approach
+========================================================
+
+
 
 Extensions
 ========================================================
 
-- "Structural topic models": from [Roberts et al.](https://scholar.princeton.edu/files/bstewart/files/stmnips2013.pdf) and dedicated webpage [here](https://www.structuraltopicmodel.com/)
-- Stochastic block model approches: see [Gerlach et al.](https://advances.sciencemag.org/content/4/7/eaaq1360/) and Github repo [here](https://github.com/martingerlach/hSBM_Topicmodel)
+- "conText": from [Rodriguez et al.](https://github.com/prodriguezsosa/EmbeddingRegression) and dedicated R package [here](https://github.com/prodriguezsosa/conText)
+- Concept mover's distance: see [Taylor and Stoltz](https://link.springer.com/article/10.1007/s42001-019-00048-6) and dedicated R package [here](https://github.com/dustinstoltz/CMDist)
 
 Worksheets
 ========================================================

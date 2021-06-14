@@ -39,8 +39,9 @@ library(stringr) # to handle text elements
 library(tidytext) # includes set of functions useful for manipulating text
 library(ggthemes) # to make your plots look nice
 library(text2vec) # for word embedding implementation
-library(widyr) #for reshaping the text data
-library(irlba) #for svd
+library(widyr) # for reshaping the text data
+library(irlba) # for svd
+library(umap) # for dimensionality reduction
 ```
 
 We begin by reading in the data. These data come from a sample of 1m tweets by elected UK MPs over the period 2017-2019. The data contain just the name of the MP-user, the text of the tweet, and the MP's party. We then just add an ID variable called "postID."
@@ -53,11 +54,15 @@ twts_sample$postID <- row.names(twts_sample)
 
 ```
 
+## Word vectors via SVD
+
 We're going to set about generating a set of word vectors with from our text data. Note that many word embedding applications will use pre-trained embeddings from a much larger corpus, or will generate local embeddings using neural net-based approaches. 
 
 Here, we're instead going to generate a set of embeddings or word vectors by making a series of calculations based on the frequencies with which words appear in different contexts. We will then use a technique called the "Singular Value Decomposition" (SVD). This is a dimensionality reduction technique where the first axis of the resulting composition is designed to capture the most variance, the second the second-most etc...
 
 How do we achieve this?
+
+## Implementation
 
 The first thing we need to do is to get our data in the right format to calculate so-called "skip-gram probabilties." If you go through the code line by the line in the below you will begin to understand what these are. 
 
@@ -88,7 +93,7 @@ head(tidy_skipgrams, n=20)
 
 What next?
 
-Well we can now calculate a set of probabilities from our skipgrams. We do so with the `pairwise_count()` function from the tt>widyrr</tt> package. Essentially, this function is saying: for each skipgramID count the number of times a word appears with another word for that feature (where the feature is the skipgramID). We set `diag` to `TRUE` when we also want to count the number of times a word appears near itself. 
+Well we can now calculate a set of probabilities from our skipgrams. We do so with the `pairwise_count()` function from the <tt>widyr</tt> package. Essentially, this function is saying: for each skipgramID count the number of times a word appears with another word for that feature (where the feature is the skipgramID). We set `diag` to `TRUE` when we also want to count the number of times a word appears near itself. 
 
 The probability we are then calculating is the number of times a word appears with another word denominated by the total number of word pairings across the whole corpus. 
 
@@ -128,7 +133,7 @@ unigram_probs <- twts_sample %>%
 
 Finally, it's time to normalize our skipgram probabilities. 
 
-We take our skipgram probabilities, we filter out word pairings that appear twenty times or less. We rename our words "item1" and "item2," we merge in the unigram probabilities for both words. And then we calculate the joint probability as the skipgram probability divided by the unigram probability for the first word in the pairing divided by the unigram probability for the second word in the pairing. This is equivalent to: P(x,y)/P(x)P(y). In essence, the interpretation of this value is: do events (words) x and y occur more often than we would expect than if they were independent?
+We take our skipgram probabilities, we filter out word pairings that appear twenty times or less. We rename our words "item1" and "item2," we merge in the unigram probabilities for both words. And then we calculate the joint probability as the skipgram probability divided by the unigram probability for the first word in the pairing divided by the unigram probability for the second word in the pairing. This is equivalent to: P(x,y)/P(x)P(y). In essence, the interpretation of this value is: do events (words) x and y occur together more often than we would expect if they were independent?
 
 Once we've recovered these normalized probabilities, we can have a look at the joint probabilities for a given item, i.e., word. Here, we look at the word "brexit" and look at those words with the highest value for "p_together." Higher values greater than 1 indicate that the words are more likely to appear close to each other; low values less than 1 indicate that they are unlikely to appear close to each other. This, in other words, gives an indication of the association of two words.
 
@@ -136,7 +141,7 @@ Once we've recovered these normalized probabilities, we can have a look at the j
 
 #normalize skipgram probabilities
 normalized_prob <- skipgram_probs %>%
-    filter(n > 20) %>%
+    filter(n > 20) %>% #filter out skipgrams with n <=20
     rename(word1 = item1, word2 = item2) %>%
     left_join(unigram_probs %>%
                   select(word1 = word, p1 = p),
@@ -182,10 +187,9 @@ glimpse(pmi_matrix)
 
 ```
 
-Notice here that we are setting the vector size to equal 256. Typically, a size in the low hundreds is chosen when representing a word as a vector.
+Notice here that we are setting the vector size to equal 256. This just means that we have a vector length of 256 for any given word. That is, the set of numbers used to represent a word has length limited to 256. This is arbitrary and can be changed. Typically, a size in the low hundreds is chosen when representing a word as a vector. 
 
-
-The word vectors are then taken as the u or the left-singular vectors of the SVD.
+The word vectors are then taken as the "u" column, or the left-singular vectors, of the SVD.
 
 ```{r}
 #next we output the word vectors:
@@ -195,6 +199,8 @@ rownames(word_vectors) <- rownames(pmi_matrix)
 dim(word_vectors)
 
 ```
+
+## Exploration 
 
 We can define a simple function below to then take our word vector, and find the most similar words, or nearest neighbours, for a given word:
 
@@ -223,16 +229,56 @@ head(brexit_synonyms, n=10)
 
 ```
 
-# GloVe Embeddings
 
-Adapts from tutorials by Pedro Rodriguez [here](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart_local_transform.md) and Dmitriy Selivanov [here](http://text2vec.org/glove.html) and Wouter van Gils [here](https://medium.com/broadhorizon-cmotions/nlp-with-r-part-2-training-word-embedding-models-and-visualize-results-ae444043e234).
 
+## GloVe Embeddings
+
+This section adapts from tutorials by Pedro Rodriguez [here](https://github.com/prodriguezsosa/conText/blob/master/vignettes/quickstart_local_transform.md) and Dmitriy Selivanov [here](http://text2vec.org/glove.html) and Wouter van Gils [here](https://medium.com/broadhorizon-cmotions/nlp-with-r-part-2-training-word-embedding-models-and-visualize-results-ae444043e234).
+
+## GloVe algorithm
+
+This section is taken from <tt>text2vec</tt> package page [here](http://text2vec.org/glove.html) by @text2vec.
+
+The GloVe algorithm by @pennington-etal-2014-glove consists of the following steps:
+
+1. Collect word co-occurence statistics in a form of word co-ocurrence matrix $X$. Each element $X_{ij}$ of such matrix represents how often word *i* appears in context of word *j*. Usually we scan our corpus in the following manner: for each term we look for context terms within some area defined by a *window_size* before the term and a *window_size* after the term. Also we give less weight for more distant words, usually using this formula: $$decay = 1/offset$$
+
+2. Define soft constraints for each word pair:  $$w_i^Tw_j + b_i + b_j = log(X_{ij})$$ Here $w_i$ - vector for the main word, $w_j$ - vector for the context word, $b_i$, $b_j$ are scalar biases for the main and context words.
+
+3. Define a cost function 
+$$J = \sum_{i=1}^V \sum_{j=1}^V \; f(X_{ij}) ( w_i^T w_j + b_i + b_j - \log X_{ij})^2$$
+Here $f$ is a weighting function which help us to prevent learning only from extremely common word pairs. The GloVe authors choose the following function:
+
+$$
+f(X_{ij}) = 
+\begin{cases}
+(\frac{X_{ij}}{x_{max}})^\alpha & \text{if } X_{ij} < XMAX \\
+1 & \text{otherwise}
+\end{cases}
+$$
+
+How do we go about implementing this algorithm in R?
+
+Let's first make sure we have loaded the packages we need:
 
 ```{r, eval = F}
-library(text2vec)
-library(stringr)
-library(umap)
+library(text2vec) # for implementation of GloVe algorithm
+library(stringr) # to handle text strings
+library(umap) # for dimensionality reduction later on
 
+```
+
+## Implementation
+
+We then need to set some of the choice parameters of the GloVe model. The first is the window size `WINDOW_SIZE`, which, as above, is arbitrary but normally set around 6-8. This means we are looking for word context of words up to 6 words around the target word. The image below illustrates this choice parameter for the word "cat" in a given sentence, with increase context window size:
+
+![Context window](images/window.png)
+
+The iterations parameter `ITERS` simply sets the maximum number of iterations to allow for model convergence. This number of iterations is relatively high and the model will likely converge before 100 iterations. 
+
+The `DIM` parameter specifies the length of the word vector we want to result (i.e., just as we set a limit of 256 for the SVD approach above). Finally, `COUNT_MIN` is specifying the minimum count of words that we want to keep. In other words, if a word appears fewer than ten times, it is discarded. Again, this is the same as above where we discarded word pairings that appeared fewer than twenty times.
+
+```{r, eval = F}
 # ================================ choice parameters
 # ================================
 WINDOW_SIZE <- 6
@@ -240,22 +286,43 @@ DIM <- 300
 ITERS <- 100
 COUNT_MIN <- 10
 
+```
+
+We next "shuffle" our text. This just means we are randomly reordering the character vector of tweets. 
+
+```{r, eval = F}
 # shuffle text
 set.seed(42L)
 text <- sample(twts_sample$tweet)
 
+```
+
+We then create a list object, tokenizing the text of each tweet within each item of the list. After this, we create the vocabulary object needed to implement the GloVe algorithm. We do this by creating an "itoken" object with `itoken()` and then creating a vocabulary with `create_vocabulary`. We then remove words that do not exceed our specified threshold above with `prune_vocabulary()`. 
+
+```{r, eval = F}
 # ================================ create vocab ================================
 tokens <- space_tokenizer(text)
 it <- itoken(tokens, progressbar = FALSE)
 vocab <- create_vocabulary(it)
 vocab_pruned <- prune_vocabulary(vocab, term_count_min = COUNT_MIN)  # keep only words that meet count threshold
 
+```
+
+Next up we vectorize our vocabulary and create our term co-occurrence matrix. Again, this is similar to the above where we created a matrix of PMIs for each of the word pairings in our corpus. 
+
+```{r, eval = F}
 # ================================ create term co-occurrence matrix
 # ================================
 vectorizer <- vocab_vectorizer(vocab_pruned)
 tcm <- create_tcm(it, vectorizer, skip_grams_window = WINDOW_SIZE, skip_grams_window_context = "symmetric", 
     weights = rep(1, WINDOW_SIZE))
 
+```
+
+Then we set our final model parameters, learning rate and fit the model. This whole process will take some time. To save time when working through this tutorial, you may also download the resulting embedding from the Github repo linked a little further below.
+
+
+```{r, eval = F}
 # ================================ set model parameters
 # ================================
 glove <- GlobalVectors$new(rank = DIM, x_max = 100, learning_rate = 0.05)
@@ -264,24 +331,43 @@ glove <- GlobalVectors$new(rank = DIM, x_max = 100, learning_rate = 0.05)
 word_vectors_main <- glove$fit_transform(tcm, n_iter = ITERS, convergence_tol = 0.001, 
     n_threads = RcppParallel::defaultNumThreads())
 
+
+```
+
+Finally, we get the resulting word embedding and save it as a .rds file.
+
+```{r, eval=FALSE}
 # ================================ get output ================================
 word_vectors_context <- glove$components
 glove_embedding <- word_vectors_main + t(word_vectors_context)  # word vectors
 
 # ================================ save ================================
-saveRDS(word_vectors, file = "local_glove.rds")
+saveRDS(glove_embedding, file = "local_glove.rds")
 
 ```
+
+**To save time when working through this tutorial, you may also download the resulting embedding from the Github repo with**:
+
+```{r, eval = F}
+
+url <- "https://github.com/cjbarrie/sicss_21/blob/main/02_text_as_data/04-word-embed/data/local_glove.rds?raw=true"
+glove_embedding <- readRDS(url(url, method="libcurl"))
+
+```
+
+
+## Visualization
 
 ```{r, echo = F}
-library(text2vec)
-library(stringr)
-library(umap)
 
 glove_embedding <- readRDS("data/local_glove.rds")
-
 ```
 
+How do we explore these embeddings? Well, imagine that our embeddings will look something not dissimilar to this visualization of another embedding [here](https://anvaka.github.io/pm/#/galaxy/word2vec-wiki?cx=-17&cy=-237&cz=-613&lx=-0.0575&ly=-0.9661&lz=-0.2401&lw=-0.0756&ml=300&s=1.75&l=1&v=d50_clean). In other words, we are talking about something that doesn't lend itself to projection in 2D space!
+
+But...
+
+All hope is not lost, space travellers. A smart technique by @mcinnes2020umap linked [here](https://arxiv.org/abs/1802.03426) describes a way to reduce the dimensionality of such embedding layers using what is called "Uniform Manifold Approximation and Projection." How do we do this? Well, happily, with the <tt>umap</tt> package by @umap2020 it is pretty straightforward!
 
 ```{r, eval = F}
 
@@ -295,6 +381,8 @@ glove_umap <- umap(glove_embedding, n_components = 2, metric = "cosine", n_neigh
 load("data/glove_umap.RData")
 
 ```
+
+Why is this helpful? Well, for a number of reasons, but it is particularly helpful here for visualizing our embeddings in two-dimensional space. 
 
 ```{r}
 
@@ -327,13 +415,15 @@ colnames(select) <- "word"
 selected_words <- df_glove_umap %>% inner_join(y=select, by= "word", match = "all") 
 
 #The ggplot visual for GloVe
-ggplot(selected_words, aes(x = UMAP1, y = UMAP2, colour = word == 'pesto')) + 
+ggplot(selected_words, aes(x = UMAP1, y = UMAP2)) + 
       geom_point(show.legend = FALSE) + 
-      scale_color_manual(values = c('black', 'red')) +
       geom_text(aes(UMAP1, UMAP2, label = word), show.legend = FALSE, size = 2.5, vjust=-1.5, hjust=0) +
       labs(title = "GloVe word embedding of words related to 'economy'") +
       theme(plot.title = element_text(hjust = .5, size = 14))
 ```
+
+
+We can see, here, then that our embeddings seem to make sense. We zoomed in first on that little outgrowth of our 2D mapping, which seemed to correspond to numbers and number words. Then we looked at words around "economy" and we see other related terms like "growth" and "jobs."
 
 ## Exercises
 

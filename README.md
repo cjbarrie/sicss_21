@@ -1,5 +1,7 @@
 # sicss_21
 
+![SICSS Banner](banner.png)
+
 Repo of teaching materials for SICSS-Oxford 2021
 
 - Tuesday 15 June. Working with Digital Data: Slides \[[Slides](https://docs.google.com/presentation/d/1aQkAt3KoFvMsaZ_XRz2XTs1MsPqj5NbcpY0aqES8Ea4/edit?usp=sharing)\]

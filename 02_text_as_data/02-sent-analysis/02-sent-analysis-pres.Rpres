@@ -219,7 +219,17 @@ head(pamph_nrc_sentiment)
 Plot
 ========================================================
 
-```{r}
+```{r, eval = F}
+pamph_nrc_sentiment %>%
+  ggplot(aes(date, sentiment)) +
+  geom_point(alpha=0.5) +
+  geom_smooth(method= loess, alpha=0.25)
+
+```
+
+========================================================
+
+```{r, echo=F, fig.align="center", out.width="40%",}
 pamph_nrc_sentiment %>%
   ggplot(aes(date, sentiment)) +
   geom_point(alpha=0.5) +

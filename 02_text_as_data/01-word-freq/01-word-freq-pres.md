@@ -225,7 +225,36 @@ tidy_des %>%
 # … with 24,979 more rows
 ```
 
-Compute counts for plotting
+REGEX
+========================================================
+
+
+```r
+x <- c("I want t0 detect some number5 right ab0ut n0w")
+str_detect(x, "\\d+")
+```
+
+```
+[1] TRUE
+```
+
+```r
+str_extract_all(x, "\\d+")
+```
+
+```
+[[1]]
+[1] "0" "5" "0" "0"
+```
+
+Check out:
+
+1. Regex crossword: [https://regexcrossword.com/](https://regexcrossword.com/).
+2. Regexone: [https://regexone.com/](https://regexone.com/)
+3. R4DS [chapter 14](https://r4ds.had.co.nz/strings.html#matching-patterns-with-regular-expressions)
+
+
+Back to the Fringe: computing counts
 ========================================================
 
 ```r
@@ -274,7 +303,9 @@ tidy_des %>%
   labs(y = NULL)
 ```
 
-![plot of chunk unnamed-chunk-13](01-word-freq-pres-figure/unnamed-chunk-13-1.png)
+========================================================
+
+<img src="01-word-freq-pres-figure/unnamed-chunk-15-1.png" title="plot of chunk unnamed-chunk-15" alt="plot of chunk unnamed-chunk-15" width="40%" style="display: block; margin: auto;" />
 
 Tag target words
 ========================================================
@@ -317,7 +348,8 @@ ggplot(edbf_counts, aes(year, sum_wom / year_total, group=1)) +
                      expand = c(0, 0), limits = c(0, NA))
 ```
 
-![plot of chunk unnamed-chunk-17](01-word-freq-pres-figure/unnamed-chunk-17-1.png)
+========================================================
+<img src="01-word-freq-pres-figure/unnamed-chunk-20-1.png" title="plot of chunk unnamed-chunk-20" alt="plot of chunk unnamed-chunk-20" width="40%" style="display: block; margin: auto;" />
 
 Worksheets
 ========================================================

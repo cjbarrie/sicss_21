@@ -17,8 +17,9 @@ output:
 bibliography: CTA.bib    
 ---
 
-
 # Exercise 4: Word embedding
+
+The lecture mentioned work by @Garg2018 and @Caliskan2017. Both articles use different forms of word embedding techniques.
 
 ## Introduction
 
@@ -29,7 +30,7 @@ In this tutorial, you will learn how to:
 * Visualize and inspect results
 * Load and examine pre-trained embeddings
 
-Adapts from tutorial by Chris Bail [here](https://cbail.github.io/textasdata/word2vec/rmarkdown/word2vec.html) and Julia Silge [here](https://juliasilge.com/blog/tidy-word-vectors/) and Emil Hvitfeldt and Julia Silge [here](https://smltar.com/).
+Note: Adapts from tutorials by Chris Bail [here](https://cbail.github.io/textasdata/word2vec/rmarkdown/word2vec.html) and Julia Silge [here](https://juliasilge.com/blog/tidy-word-vectors/) and Emil Hvitfeldt and Julia Silge [here](https://smltar.com/).
 
 ## Setup 
 
@@ -133,9 +134,15 @@ unigram_probs <- twts_sample %>%
 
 Finally, it's time to normalize our skipgram probabilities. 
 
-We take our skipgram probabilities, we filter out word pairings that appear twenty times or less. We rename our words "item1" and "item2," we merge in the unigram probabilities for both words. And then we calculate the joint probability as the skipgram probability divided by the unigram probability for the first word in the pairing divided by the unigram probability for the second word in the pairing. This is equivalent to: P(x,y)/P(x)P(y). In essence, the interpretation of this value is: do events (words) x and y occur together more often than we would expect if they were independent?
+We take our skipgram probabilities, we filter out word pairings that appear twenty times or less. We rename our words "item1" and "item2," we merge in the unigram probabilities for both words. 
 
-Once we've recovered these normalized probabilities, we can have a look at the joint probabilities for a given item, i.e., word. Here, we look at the word "brexit" and look at those words with the highest value for "p_together." Higher values greater than 1 indicate that the words are more likely to appear close to each other; low values less than 1 indicate that they are unlikely to appear close to each other. This, in other words, gives an indication of the association of two words.
+And then we calculate the joint probability as the skipgram probability divided by the unigram probability for the first word in the pairing divided by the unigram probability for the second word in the pairing. This is equivalent to: P(x,y)/P(x)P(y). 
+
+In essence, the interpretation of this value is: *"do events (words) x and y occur together more often than we would expect if they were independent"*?
+
+Once we've recovered these normalized probabilities, we can have a look at the joint probabilities for a given item, i.e., word. Here, we look at the word "brexit" and look at those words with the highest value for "p_together."
+
+Higher values greater than 1 indicate that the words are more likely to appear close to each other; low values less than 1 indicate that they are unlikely to appear close to each other. This, in other words, gives an indication of the association of two words.
 
 ```{r, warning=F}
 
@@ -157,7 +164,11 @@ normalized_prob %>%
 
 ```
 
-Using this normalized probabilities, we then calculate the PMI or "Pointwise Mutual Information" value, which is simply the log of the joint probability we calculated above. We then cast our word pairs into a sparse matrix where values correspond to the PMI between two corresponding words. 
+Using this normalized probabilities, we then calculate the PMI or "Pointwise Mutual Information" value, which is simply the log of the joint probability we calculated above. 
+
+**Definition time**: "PMI is logarithm of the probability of finding two words together, normalized for the probability of finding each of the words alone."
+
+We then cast our word pairs into a sparse matrix where values correspond to the PMI between two corresponding words. 
 
 ```{r, eval=F}
 
@@ -187,7 +198,9 @@ glimpse(pmi_matrix)
 
 ```
 
-Notice here that we are setting the vector size to equal 256. This just means that we have a vector length of 256 for any given word. That is, the set of numbers used to represent a word has length limited to 256. This is arbitrary and can be changed. Typically, a size in the low hundreds is chosen when representing a word as a vector. 
+Notice here that we are setting the vector size to equal 256. This just means that we have a vector length of 256 for any given word. 
+
+That is, the set of numbers used to represent a word has length limited to 256. This is arbitrary and can be changed. Typically, a size in the low hundreds is chosen when representing a word as a vector. 
 
 The word vectors are then taken as the "u" column, or the left-singular vectors, of the SVD.
 
@@ -208,7 +221,7 @@ We can define a simple function below to then take our word vector, and find the
 
 nearest_words <- function(word_vectors, word){
   selected_vector = word_vectors[word,]
-  mult = as.data.frame(word_vectors %*% selected_vector)
+  mult = as.data.frame(word_vectors %*% selected_vector) #dot product of selected word vector and all word vectors
   
   mult %>%
   rownames_to_column() %>%
@@ -227,8 +240,23 @@ head(boris_synonyms, n=10)
 
 head(brexit_synonyms, n=10)
 
-```
+#then we can visualize
+brexit_synonyms %>%
+  mutate(selected = "brexit") %>%
+  bind_rows(boris_synonyms %>%
+              mutate(selected = "boris")) %>%
+  group_by(selected) %>%
+  top_n(15, similarity) %>%
+  mutate(token = reorder(word, similarity)) %>%
+  filter(token!=selected) %>%
+  ggplot(aes(token, similarity, fill = selected)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~selected, scales = "free") +
+  scale_fill_manual(values = c("#336B87", "#2A3132")) +
+  coord_flip() +
+  theme_tufte(base_family = "Helvetica")
 
+```
 
 
 ## GloVe Embeddings
@@ -273,6 +301,10 @@ library(umap) # for dimensionality reduction later on
 We then need to set some of the choice parameters of the GloVe model. The first is the window size `WINDOW_SIZE`, which, as above, is arbitrary but normally set around 6-8. This means we are looking for word context of words up to 6 words around the target word. The image below illustrates this choice parameter for the word "cat" in a given sentence, with increase context window size:
 
 ![Context window](images/window.png)
+
+And this will ultimately be understood in matrix format as:
+
+![Context window](images/matrix_context.png)
 
 The iterations parameter `ITERS` simply sets the maximum number of iterations to allow for model convergence. This number of iterations is relatively high and the model will likely converge before 100 iterations. 
 
@@ -427,7 +459,7 @@ We can see, here, then that our embeddings seem to make sense. We zoomed in firs
 
 ## Exercises
 
-1. 
-2. 
+1. Inspect and visualize the nearest neighbour synonyms of other relevant words in the tweets corpus
+2. Identify another region of interest in the GloVe-trained model and visualize
 
 ## References 

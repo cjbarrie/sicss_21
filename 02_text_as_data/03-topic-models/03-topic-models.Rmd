@@ -283,5 +283,3 @@ Not bad! We see that the model estimated with accuracy 91% of chapters in Volume
 
 1. Choose another book or set of books from Project Gutenberg
 2. Run your own topic model on these books, changing the k of topics, and evaluating accuracy.
-
-## References 

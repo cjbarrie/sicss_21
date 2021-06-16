@@ -141,7 +141,23 @@ tidy_des %>%
   count(word, sort = TRUE)
 ```
 
-Compute counts for plotting
+REGEX
+========================================================
+
+```{r}
+x <- c("I want t0 detect some number5 right ab0ut n0w")
+str_detect(x, "\\d+")
+str_extract_all(x, "\\d+")
+```
+
+Check out:
+
+1. Regex crossword: [https://regexcrossword.com/](https://regexcrossword.com/).
+2. Regexone: [https://regexone.com/](https://regexone.com/)
+3. R4DS [chapter 14](https://r4ds.had.co.nz/strings.html#matching-patterns-with-regular-expressions)
+
+
+Back to the Fringe: computing counts
 ========================================================
 ```{r, message=FALSE, warning=FALSE, eval=TRUE}
 tidy_des %>%
@@ -154,7 +170,21 @@ tidy_des %>%
 Plot
 ========================================================
 
-```{r}
+```{r, eval=F}
+
+tidy_des %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 700) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(n, word)) +
+  geom_col() +
+  labs(y = NULL)
+
+```
+
+========================================================
+
+```{r, echo=F, fig.align="center", out.width="40%",}
 
 tidy_des %>%
   count(word, sort = TRUE) %>%
@@ -194,7 +224,19 @@ edbf_counts <- edbf_term_counts %>%
 
 Plot
 ========================================================
-```{r, eval=T}
+```{r, eval=F}
+ggplot(edbf_counts, aes(year, sum_wom / year_total, group=1)) +
+  geom_line() +
+  xlab("Year") +
+  ylab("% gender-related words") +
+  scale_y_continuous(labels = scales::percent_format(),
+                     expand = c(0, 0), limits = c(0, NA))
+
+```
+
+========================================================
+```{r, echo=F, fig.align="center", out.width="40%",}
+
 ggplot(edbf_counts, aes(year, sum_wom / year_total, group=1)) +
   geom_line() +
   xlab("Year") +

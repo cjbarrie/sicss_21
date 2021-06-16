@@ -4,7 +4,6 @@ subtitle: "SICSS-Oxford, 2021"
 author:
   name: Christopher Barrie
   affiliation: University of Edinburgh | [SICSS](https://github.com/cjbarrie/sicss_21)
-# date: Lecture 6  #"10 June 2021"
 output: 
   html_document:
     theme: flatly
@@ -18,20 +17,17 @@ output:
 bibliography: CTA.bib    
 ---
 
-
 # Exercise 1: Word frequency analysis
 
-The hands-on exercise for this week uses a different source of data, and here I introduce you to how we might gather, clean, and analyze text data. In so doing, I also refer to the article by @nelson_computational_2020, and the steps she proposes for a "grounded" approach to the analysis of text data. The argument @nelson_computational_2020 makes is that we can use computational techniques for the discovery of topics within text, and then employ more interpretative techniques to analyze meaning in the text itself. Here, we will be mainly focusing on what @nelson_computational_2020 refers to as "lexical-based techniques," though we will also have the chance to perform a simple classification task. 
+The lecture mentioned work by @Michel2011a and @Hills2019. Both articles use different forms of word frequency analysis. 
 
 ## Introduction
 
 In this tutorial, you will learn how to summarise, aggregate, and analyze text in R:
 
-* How to summarise tables with `summarise()` 
-* How to use the pipe (`%>%`) operators with dplyr from the tidyverse
-* How to summarise groups of observations with `group_by()` and `summarise()`
+* How to tokenize and filter text
+* How to clean and preprocess text
 * How to visualize results with ggplot
-* How to tidy text with tidytext functions
 * How to perform automated gender assignment from name data (and think about possible biases these methods may enclose)
 
 ## Setup 
@@ -39,8 +35,6 @@ In this tutorial, you will learn how to summarise, aggregate, and analyze text i
 To practice these skills, we will use a dataset that has already been collected from the Edinburgh Fringe Festival website. You can try this out yourself too: to obtain these data, you must first obtain an API key. Instructions on how to do this are available at the [Edinburgh Fringe API page](https://api.edinburghfestivalcity.com/documentation/fringe_approval):
 
 ![Alt Text](data/fringeapi.png)
-
-This might sound complicated but it isn't really. In essence, APIs simply provide data in a more usable format without the need for alternative techniques such as web scraping. Be warned, too, that some websites do not permit automated web scraping, meaning the use of an API is essential.
 
 ##  Load data and packages 
 
@@ -200,11 +194,168 @@ tidy_des <- evdes %>%
   filter(str_detect(word, "[a-z]"))
 ```
 
+## Regex sidebar 
+
+You'll notice that in the parentheses after `str_detect()` we have the string "[a-z]". This is called a __character class__ and these use square brackets like `[]`. 
+
+Other character classes include, as helpfully listed in this [vignette](https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html) for the <tt>stringr</tt> package. What follows is adapted from these materials. 
+
+* `[abc]`: matches a, b, or c.
+* `[a-z]`: matches every character between a and z 
+   (in Unicode code point order).
+* `[^abc]`: matches anything except a, b, or c.
+* `[\^\-]`: matches `^` or `-`.
+
+Several other patterns match multiple characters. These include:
+
+*   `\d`: matches any digit; the opposite of this is `\D`, which matches any character that 
+    is not a decimal digit.
+
+
+```r
+str_extract_all("1 + 2 = 3", "\\d+")
+```
+
+```
+## [[1]]
+## [1] "1" "2" "3"
+```
+
+```r
+str_extract_all("1 + 2 = 3", "\\D+")
+```
+
+```
+## [[1]]
+## [1] " + " " = "
+```
+    
+*   `\s`: matches any whitespace; its opposite is `\S`
+    
+
+```r
+(text <- "Some  \t badly\n\t\tspaced \f text")
+```
+
+```
+## [1] "Some  \t badly\n\t\tspaced \f text"
+```
+
+```r
+str_replace_all(text, "\\s+", " ")
+```
+
+```
+## [1] "Some badly spaced text"
+```
+
+*   `^`: matches start of the string
+    
+
+```r
+x <- c("apple", "banana", "pear")
+str_extract(x, "^a")
+```
+
+```
+## [1] "a" NA  NA
+```
+*   `$`: matches end of the string
+    
+
+```r
+x <- c("apple", "banana", "pear")
+str_extract(x, "^a$")
+```
+
+```
+## [1] NA NA NA
+```
+
+*   `^` then `$`: exact string match
+    
+
+```r
+x <- c("apple", "banana", "pear")
+str_extract(x, "^apple$")
+```
+
+```
+## [1] "apple" NA      NA
+```
+
+Hold up: what do the plus signs etc. mean?
+
+* `+`: 1 or more.
+* `*`: 0 or more.
+* `?`: 0 or 1.
+
+So if you can tell me why this output makes sense, you're getting there!
+
+
+```r
+str_extract_all("1 + 2 = 3", "\\d+")[[1]]
+```
+
+```
+## [1] "1" "2" "3"
+```
+
+```r
+str_extract_all("1 + 2 = 3", "\\D+")[[1]]
+```
+
+```
+## [1] " + " " = "
+```
+
+```r
+str_extract_all("1 + 2 = 3", "\\d*")[[1]]
+```
+
+```
+##  [1] "1" ""  ""  ""  "2" ""  ""  ""  "3" ""
+```
+
+```r
+str_extract_all("1 + 2 = 3", "\\D*")[[1]]
+```
+
+```
+## [1] ""    " + " ""    " = " ""    ""
+```
+
+```r
+str_extract_all("1 + 2 = 3", "\\d?")[[1]]
+```
+
+```
+##  [1] "1" ""  ""  ""  "2" ""  ""  ""  "3" ""
+```
+
+```r
+str_extract_all("1 + 2 = 3", "\\D?")[[1]]
+```
+
+```
+##  [1] ""  " " "+" " " ""  " " "=" " " ""  ""
+```
+
+### Some more regex resources:
+
+1. Regex crossword: [https://regexcrossword.com/](https://regexcrossword.com/).
+2. Regexone: [https://regexone.com/](https://regexone.com/)
+3. R4DS [chapter 14](https://r4ds.had.co.nz/strings.html#matching-patterns-with-regular-expressions)
+
+## Back to the Fringe
+
 We see that the resulting dataset is large (~293k rows). This is because the above commands have first taken the pamphlet text, and has "mutated" it into a set of lower case character string. With the "unnest_tokens" function it has then taken each individual string and create a new column called "word" that contains each individual word contained in the pamphlet texts.
 
 Some terminology is also appropriate here. When we tidy our text into this format, we often refer to these data structures as consisting of "documents" and "terms." This is because by "tokenizing" our text with the "unnest_tokens" functions we are generating a dataset with one term per row. 
 
-Here, our "documents" are the collection of descriptions for all events in each year at the Edinburgh Book Festival. The way in which we sort our text into "documents" depends on the choice of the individual researcher. Instead of by year, we might have wanted to sort our text into "genre." Here, we have two genres: "Literature" and "Children." Had we done so, we would then have only two "documents," which contained all of the words included in the event descriptions for each genre. 
+Here, our "documents" are the collection of descriptions for all events in each year at the Edinburgh Book Festival. The way in which we sort our text into "documents" depends on the choice of the individual researcher. 
+
+Instead of by year, we might have wanted to sort our text into "genre." Here, we have two genres: "Literature" and "Children." Had we done so, we would then have only two "documents," which contained all of the words included in the event descriptions for each genre. 
 
 Alternatively, we might be interested in the contributions of individual authors over time. Were this the case, we could have sorted our text into documents by author. In this case, each "document" would represent all the words included in event descriptions for events by the given author (many of whom do have multiple appearances over time or in the same festival for a given year).
  
@@ -240,7 +391,7 @@ stop_words
 ## # … with 1,139 more rows
 ```
 
-This is a lexicon (list of words) included in the <tt>tidytext</tt> packaged produced by Julia Silge and David Robinson (see [here](https://cran.r-project.org/web/packages/tidytext/vignettes/tidytext.html)). We see it contains over 1000 such words. We remove them here because they are not very informative if we are interested in the substantive content of text (rather than, say, its grammatical content).
+This is a lexicon (list of words) included in the <tt>tidytext</tt> package produced by Julia Silge and David Robinson (see [here](https://cran.r-project.org/web/packages/tidytext/vignettes/tidytext.html)). We see it contains over 1000 such words. We remove them here because they are not very informative if we are interested in the substantive content of text (rather than, say, its grammatical content).
 
 Now let's have a look at the most common words in these data:
 
@@ -414,7 +565,7 @@ ggplot(edbf_counts, aes(year, sum_wom / year_total, group=1)) +
   theme_tufte(base_family = "Helvetica") 
 ```
 
-![](01-word-freq_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](01-word-freq_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 We can add visual guides to draw attention to apparent changes in these data. Here, we might wish to signal the year of the #MeToo movement in 2017.
 
@@ -430,7 +581,7 @@ ggplot(edbf_counts, aes(year, sum_wom / year_total, group=1)) +
   theme_tufte(base_family = "Helvetica")
 ```
 
-![](01-word-freq_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](01-word-freq_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 And we could label why we are highlighting the year of 2017 by including a text label along the vertical line. 
 
@@ -448,9 +599,9 @@ ggplot(edbf_counts, aes(year, sum_wom / year_total, group=1)) +
   theme_tufte(base_family = "Helvetica")
 ```
 
-![](01-word-freq_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](01-word-freq_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
-## Gender prediction
+## Bonus: gender prediction
 
 We might decide that this measure is inadequate or too expansive to answer the question at hand. Another way of measuring representation in cultural production is to measure the gender of the authors who spoke at these events.
 
@@ -471,7 +622,9 @@ gendes <- edbfdata %>%
 gendes$name <- sub(" .*", "", gendes$artist)
 ```
 
-A set of packages called <tt>gender</tt> and <tt>genderdata</tt> used to make the process of predicting gender based on a given individual's name pretty straightforward. This technique worked with reference to  U.S. Social Security Administration baby name data. Given that the most common gender associated with a given name changes over time, the function also allows us to specify the range of years for the cohort in question whose gender we are inferring. Given that we don't know how wide the cohort of artists is that we have here, we could specify a broad range of 1920-2000.
+A set of packages called <tt>gender</tt> and <tt>genderdata</tt> used to make the process of predicting gender based on a given individual's name pretty straightforward. This technique worked with reference to  U.S. Social Security Administration baby name data. 
+
+Given that the most common gender associated with a given name changes over time, the function also allows us to specify the range of years for the cohort in question whose gender we are inferring. Given that we don't know how wide the cohort of artists is that we have here, we could specify a broad range of 1920-2000.
 
 
 ```r
@@ -479,13 +632,19 @@ genpred <- gender(gendes$name,
        years = c(1920, 2000))
 ```
 
-Unfortunately, this package no longer works with newer versions of R. I have recreated it using the original "babynames" data, which comes bundled in the <tt>babynames</tt> package. You don't necessarily have to follow each step of how I have done this---I include this information for the sake of completeness.
+Unfortunately, this package no longer works with newer versions of R; fortunately, I have recreated it using the original "babynames" data, which comes bundled in the <tt>babynames</tt> package. 
 
-The <tt>babynames</tt> package. contains, for each year, the number of children born with a given name, as well as their sex. With this information, we can then calculate the total number of individuals with a given name born for each sex in a given year. Given we also have the total number of babies born in total cross these records, we can denominate (divide) the sums for each name by the total number of births for each sex in each year. We can take this proportion as representing the probability that a given individual in our Edinburgh Fringe dataset is male or female. 
+You don't necessarily have to follow each step of how I have done this---I include this information for the sake of completeness.
+
+The <tt>babynames</tt> package. contains, for each year, the number of children born with a given name, as well as their sex. With this information, we can then calculate the total number of individuals with a given name born for each sex in a given year. 
+
+Given we also have the total number of babies born in total cross these records, we can denominate (divide) the sums for each name by the total number of births for each sex in each year. We can take this proportion as representing the probability that a given individual in our Edinburgh Fringe dataset is male or female. 
 
 More information on the <tt>babynames</tt> package can be found [here](https://www.ssa.gov/oact/babynames/limits.html). 
 
-We first load the babynames package into the R environment as a data.frame object. Because the data.frame "babynames" is contained in the <tt>babynames</tt> package we can just call it as an object and store it with . This dataset contains names for all years over a period 1800--2019. The variable "n" represents the number of babies born with the given name and sex in that year, and the "prop" represents, according to the package materials accessible [here](https://cran.r-project.org/web/packages/babynames/babynames.pdf), "n divided  by  total  number  of applicants in that year, which means proportions are of people of that gender with that name born in that year."
+We first load the babynames package into the R environment as a data.frame object. Because the data.frame "babynames" is contained in the <tt>babynames</tt> package we can just call it as an object and store it with . 
+
+This dataset contains names for all years over a period 1800--2019. The variable "n" represents the number of babies born with the given name and sex in that year, and the "prop" represents, according to the package materials accessible [here](https://cran.r-project.org/web/packages/babynames/babynames.pdf), "n divided  by  total  number  of applicants in that year, which means proportions are of people of that gender with that name born in that year."
 
 
 ```r
@@ -535,7 +694,9 @@ head(totsm)
 ## 6 1880   F  Margaret 1578 0.01616720        90993     110491
 ```
 
-We can then calculate, for all babies born on or after 1920, the number of babies born with that name and sex. With this information, we can then get the proportion of all babies with a given name that were of a particular sex. For example, if 92% of babies born with the name "Mary" were female, this would give us a .92 probability that an individual with the name "Mary" is female. We do this for every name in the dataset, excluding names for which the proportion is equal to .5; i.e., for names that we cannot adjudicate between whether they are more or less likely male or female.
+We can then calculate, for all babies born on or after 1920, the number of babies born with that name and sex. With this information, we can then get the proportion of all babies with a given name that were of a particular sex. For example, if 92% of babies born with the name "Mary" were female, this would give us a .92 probability that an individual with the name "Mary" is female. 
+
+We do this for every name in the dataset, excluding names for which the proportion is equal to .5; i.e., for names that we cannot adjudicate between whether they are more or less likely male or female.
 
 
 ```r
@@ -584,7 +745,7 @@ ggplot(ednameprops, aes(x=year, fill = factor(sex))) +
   geom_abline(slope=0, intercept=0.5,  col = "black",lty=2)
 ```
 
-![](01-word-freq_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](01-word-freq_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
 
 What can we conclude form this graph?
 
@@ -651,6 +812,6 @@ Do we notice anything about these names? What does this tell us about the potent
 ## Exercises
 
 1. Filter the books by genre (selecting e.g., "Literature" or "Children") and plot frequency of women-related words over time.
-2. Choose another set of terms to filter by (e.g., race-related words) and plot their frequency over time.
+2. Choose another set of terms by which to filter (e.g., race-related words) and plot their frequency over time.
 
 ## References 

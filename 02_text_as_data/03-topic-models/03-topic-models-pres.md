@@ -155,23 +155,26 @@ Evaluating a topic model
 
 ```r
 tocq_topics <- tidy(tocq_lda, matrix = "beta")
-head(tocq_topics, n = 10)
+
+tocq_topics %>%
+  arrange(-beta)
 ```
 
 ```
-# A tibble: 10 x 3
-   topic term          beta
-   <int> <chr>        <dbl>
- 1     1 democratic 0.00855
- 2     2 democratic 0.0115 
- 3     3 democratic 0.00444
- 4     4 democratic 0.0193 
- 5     5 democratic 0.00254
- 6     6 democratic 0.00866
- 7     7 democratic 0.00165
- 8     8 democratic 0.0108 
- 9     9 democratic 0.00276
-10    10 democratic 0.00334
+# A tibble: 120,920 x 3
+   topic term         beta
+   <int> <chr>       <dbl>
+ 1     4 democratic 0.0193
+ 2     5 people     0.0162
+ 3     6 people     0.0154
+ 4    10 people     0.0130
+ 5     7 government 0.0127
+ 6     3 united     0.0124
+ 7     7 power      0.0121
+ 8     6 power      0.0121
+ 9     4 people     0.0120
+10     2 democratic 0.0115
+# … with 120,910 more rows
 ```
 
 Evaluating a topic model
@@ -205,7 +208,7 @@ head(tocq_gamma, n = 10)
 Extensions
 ========================================================
 
-- "Structural topic models": from [Roberts et al.](https://scholar.princeton.edu/files/bstewart/files/stmnips2013.pdf) and dedicated webpage [here](https://www.structuraltopicmodel.com/)
+- "Structural topic models": from [Roberts et al.](https://scholar.princeton.edu/files/bstewart/files/stmnips2013.pdf) and dedicated webpage [here](https://www.structuraltopicmodel.com/) and JOSS article [here](https://raw.githubusercontent.com/bstewart/stm/master/vignettes/stmVignette.pdf)
 - Stochastic block model approches: see [Gerlach et al.](https://advances.sciencemag.org/content/4/7/eaaq1360/) and Github repo [here](https://github.com/martingerlach/hSBM_Topicmodel)
 
 Worksheets

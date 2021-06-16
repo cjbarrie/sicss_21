@@ -355,7 +355,9 @@ pamph_nrc_sentiment %>%
   geom_smooth(method= loess, alpha=0.25)
 ```
 
-![plot of chunk unnamed-chunk-17](02-sent-analysis-pres-figure/unnamed-chunk-17-1.png)
+========================================================
+
+<img src="02-sent-analysis-pres-figure/unnamed-chunk-18-1.png" title="plot of chunk unnamed-chunk-18" alt="plot of chunk unnamed-chunk-18" width="40%" style="display: block; margin: auto;" />
 
 Worksheets
 ========================================================

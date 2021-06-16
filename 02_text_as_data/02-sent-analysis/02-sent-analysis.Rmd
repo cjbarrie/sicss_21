@@ -20,6 +20,8 @@ bibliography: CTA.bib
 
 # Exercise 2: Sentiment analysis
 
+The lecture mentioned work by @Lansdall-Welfare2017 and @Martins2020a. Both articles use different forms of sentiment analysis, constructing indices of different types. 
+
 ## Introduction
 
 In this tutorial, you will learn how to:

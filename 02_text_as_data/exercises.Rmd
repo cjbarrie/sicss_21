@@ -1,0 +1,44 @@
+---
+title: "Exercises"
+subtitle: "SICSS-Oxford, 2021"
+author:
+  name: Christopher Barrie
+  affiliation: University of Edinburgh | [SICSS](https://github.com/cjbarrie/sicss_21)
+output: 
+  html_document:
+    theme: flatly
+    highlight: haddock
+    # code_folding: show
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    keep_md: true
+    
+bibliography: CTA.bib    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Text as data exercises
+
+We have learned a bit about four main applications of text as data techniques: word frequency analysis; sentiment analysis; topic modeling; and word embedding. Each of the four exercises focuses on one of these techniques. For some of the exercises there a several options. Don't try to do all of them!
+
+## Word frequency
+
+1. Take a large corpus from one of the sources listed [here](https://www.english-corpora.org/). Preprocess the text appropriately. Calculate word frequencies over time or across documents. Visualize the results.
+
+2. Take a book or selection of books from Project Gutenberg. The R package detailed [here](https://cran.r-project.org/web/packages/gutenbergr/vignettes/intro.html) will be helpful with this. Calculate word frequencies across chapters of the same book or across entire books.
+
+Ideas: Variation is what we're often interested in as social scientists. So: 1) think about language use over time: what might change in language use tell us about cultural phenomena?; 2) think about sentence length (or complexity) over time; what does this tell us about differences over time or across different groups or across different texts?
+
+## Sentiment analysis
+
+1. Take tweets data from a labelled dataset of tweets listed [https://data.world/crowdflower/sentiment-analysis-in-text](https://data.world/crowdflower/sentiment-analysis-in-text) and which I've made downloadable via:
+
+```{r, eval=F}
+
+twts_sent_data <- read_csv()
+
+```

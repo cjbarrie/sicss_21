@@ -13,3 +13,5 @@ Repo of teaching materials for SICSS-Oxford 2021
 - Thursday 17 June. Text as Data: Sentiment analysis \[[Worksheet](https://raw.githack.com/cjbarrie/sicss_21/main/02_text_as_data/02-sent-analysis/02-sent-analysis.html)\]\[[Slides](https://raw.githack.com/cjbarrie/sicss_21/main/02_text_as_data/02-sent-analysis/02-sent-analysis-pres.html)\]
 - Thursday 17 June. Text as Data: Topic models \[[Worksheet](https://raw.githack.com/cjbarrie/sicss_21/main/02_text_as_data/03-topic-models/03-topic-models.html)\]\[[Slides](https://raw.githack.com/cjbarrie/sicss_21/main/02_text_as_data/03-topic-models/03-topic-models-pres.html)\]
 - Thursday 17 June. Text as Data: Word embedding \[[Worksheet](https://raw.githack.com/cjbarrie/sicss_21/main/02_text_as_data/04-word-embed/04-word-embed.html)\]\[[Slides](https://raw.githack.com/cjbarrie/sicss_21/main/02_text_as_data/04-word-embed/04-word-embed-pres.html)\]
+
+**Group exercises**: \[[here](https://raw.githack.com/cjbarrie/sicss_21/main/02_text_as_data/exercises.html)\]

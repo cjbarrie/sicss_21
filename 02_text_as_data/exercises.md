@@ -15,9 +15,7 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 # Text as data exercises
 
@@ -35,10 +33,9 @@ Ideas: Variation is what we're often interested in as social scientists. So: 1) 
 
 1. Take tweets data from a labelled dataset of tweets listed [https://data.world/crowdflower/sentiment-analysis-in-text](https://data.world/crowdflower/sentiment-analysis-in-text) and which I've made downloadable via:
 
-```{r, eval=F}
 
+```r
 twts_sent_data <- read.csv("https://raw.githubusercontent.com/cjbarrie/sicss_21/main/02_text_as_data/exercises_data/text_emotion.csv")
-
 ```
 
 Use a sentiment analysis technique to label each tweet. You will need to group the labels in the original data into broader categories comparable to the type of sentiment labels you are going to produce (e.g., positive versus negative). Compare the labels you produce to those in the original data. 
@@ -57,11 +54,10 @@ Use a sentiment analysis technique to label each tweet. You will need to group t
 
 1. Use the GloVe embedding of MP tweets produced in the tutorial, and hosted on my Github with:
 
-```{r, eval = F}
 
+```r
 url <- "https://github.com/cjbarrie/sicss_21/blob/main/02_text_as_data/04-word-embed/data/local_glove.rds?raw=true"
 glove_embedding <- readRDS(url(url, method="libcurl"))
-
 ```
 
 Implement a UMAP reprojection of these data. Explore one region of the data and visualize. Harder: upload the data and project in three dimensions using the tensorflow projector [here](http://projector.tensorflow.org/).
